@@ -6,21 +6,47 @@
 #include <TBrowser.h>
 #include <TApplication.h>
 #include <TChain.h>
+#include "TThread.h"
 
 #include "SelectionTools.hpp"
 #include "AnaNuMI.h"
+#include "Spectrum.hpp"
 
 using namespace std;
+
 
 
 int main(int argc, char* argv[]) {
 
   clock_t begin = clock();
 
-  TApplication* rootapp = new TApplication("example",&argc, argv);
+  TApplication* rootapp = new TApplication("ROOT Application",&argc, argv);
+
+  string pattern = "/data/t2k/lar/uboone/prodgenie_numi_nu_uboone_MCC7/prodgenie_numi_nu_cosmic_uboone_merged_gen_g4_detsim_reco1_reco2_ana.root";
+
+  bool evalPOT = true;
+  double totalPOT = 0.;
+  if (evalPOT) {
+
+    cout << " ----- " << endl;
+    cout << "| Calculating simulated POT." << endl;
+    cout << "| " << endl;
+   
+    TChain *cpot;
+    cpot = new TChain("analysistree/pottree");  
+    cpot->Add(pattern.c_str());
+    cout << "| Number of entries in the pot tree: " << cpot->GetEntries() << endl;
+    Double_t pot;
+    cpot->SetBranchAddress("pot", &pot);
+    for (int potEntry = 0; potEntry < cpot->GetEntries(); potEntry++) {
+      cpot->GetEntry(potEntry);
+      totalPOT += pot;
+    } // end loop entries
+    cout << "| Simulated POT: " << totalPOT << endl;
+    cout << " ----- " << endl << endl;
+  } // end if evalPOT
 
   TChain *cflux;
-  string pattern = "/data/t2k/lar/uboone/prodgenie_numi_nu_uboone_MCC7/prodgenie_numi_nu_cosmic_uboone_merged_gen_g4_detsim_reco1_reco2_ana.root";
   cflux = new TChain("analysistree/anatree");
   cflux->Add(pattern.c_str());
 
@@ -38,12 +64,41 @@ int main(int argc, char* argv[]) {
   int selectedEvents = 0.;
   int counter = 0.;  
 
-  for(int i = 0; i < 101; i++) {
+  Spectrum* Sflashtime      = new Spectrum("flash_time",      3000, -3000, 3000, totalPOT);
+  Spectrum* Sflashpe        = new Spectrum("flash_pe",        1000, 0, 100000, totalPOT);
+  Spectrum* Sflashycenter   = new Spectrum("flash_ycenter",   1000, -150, 200, totalPOT);
+  Spectrum* Sflashzcenter   = new Spectrum("flash_zcenter",   1000, 0, 15000, totalPOT);
+  Spectrum* Sflashtimewidth = new Spectrum("flash_timewidth", 1000, 0, 0.6, totalPOT);
+
+
+  for(int i = 0; i < 201; i++) {
 
     if(i%100 == 0) cout << "\t... " << i << endl;
 
     cflux->GetEntry(i);
     SelectionTools * selection = new SelectionTools(anatree);
+
+    // ************************
+    //
+    // Preliminary distributions
+    //
+    // ************************
+
+    // Flashes
+    for (int fls = 0; fls < anatree->no_flashes; fls++) {
+      Sflashtime      ->Fill(anatree->flash_time[fls]);
+      Sflashpe        ->Fill(anatree->flash_pe[fls]);
+      Sflashycenter   ->Fill(anatree->flash_ycenter[fls]);
+      Sflashzcenter   ->Fill(anatree->flash_zcenter[fls]);
+      Sflashtimewidth ->Fill(anatree->flash_timewidth[fls]);
+    }
+
+    
+    // ************************
+    //
+    //  Selection
+    //
+    // ************************
 
     int theFlash = -1;
     if (selection->FlashTag(theFlash) == false) continue;
@@ -79,6 +134,13 @@ int main(int argc, char* argv[]) {
     selectedEvents++;
  
     delete selection;
+  }
+
+  Sflashtime      ->Save();
+  Sflashpe        ->Save();
+  Sflashycenter   ->Save();
+  Sflashzcenter   ->Save();
+  Sflashtimewidth ->Save();
 
   cout << endl << endl << "********************************" << endl;
   cout << "Total events:     " << evts << endl;

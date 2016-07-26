@@ -38,15 +38,11 @@ int main(int argc, char* argv[]) {
   int selectedEvents = 0.;
   int counter = 0.;  
 
-  #pragma omp parallel num_threads(3)
-  {
-  #pragma omp for
   for(int i = 0; i < 101; i++) {
 
     if(i%100 == 0) cout << "\t... " << i << endl;
 
     cflux->GetEntry(i);
-    //AnaNuMI * anatree = new AnaNuMI(cflux_n);
     SelectionTools * selection = new SelectionTools(anatree);
 
     int theFlash = -1;
@@ -83,8 +79,6 @@ int main(int argc, char* argv[]) {
     selectedEvents++;
  
     delete selection;
-  }
-  }
 
   cout << endl << endl << "********************************" << endl;
   cout << "Total events:     " << evts << endl;

@@ -38,7 +38,11 @@ Spectrum::Spectrum(string name, int nbins, double xlow, double xup, double POT) 
   fPOT = POT;
   fname = name;
 
-  h = new TH1D(name.c_str(), name.c_str(), (Int_t)nbins, (Double_t)xlow, (Double_t)xup);
+  std::ostringstream title;
+  title << fname << " @ " << fPOT << " POT"; 
+  std::string titlestr = title.str();
+
+  h = new TH1D(name.c_str(), titlestr.c_str(), (Int_t)nbins, (Double_t)xlow, (Double_t)xup);
 
 }
 

@@ -22,7 +22,7 @@ int main(int argc, char* argv[]) {
 
   TApplication* rootapp = new TApplication("ROOT Application",&argc, argv);
 
-  string pattern = "/data/t2k/lar/uboone/prodgenie_numi_nu_uboone_MCC7/prodgenie_numi_nu_cosmic_uboone_merged_gen_g4_detsim_reco1_reco2_ana.root";
+  string pattern = "/data/t2k/lar/uboone/prodgenie_numi_nu_uboone_MCC7/prodgenie_numi_nu_cosmic_uboone_merged_gen_g4_detsim_reco1_reco2_ana_2.root";
 
   bool evalPOT = true;
   double totalPOT = 0.;
@@ -64,14 +64,15 @@ int main(int argc, char* argv[]) {
   int selectedEvents = 0.;
   int counter = 0.;  
 
-  Spectrum* Sflashtime      = new Spectrum("flash_time",      3000, -3000, 3000, totalPOT);
+  Spectrum* Sflashtime      = new Spectrum("flash_time",      300000, -3000, 3000, totalPOT);
   Spectrum* Sflashpe        = new Spectrum("flash_pe",        1000, 0, 100000, totalPOT);
   Spectrum* Sflashycenter   = new Spectrum("flash_ycenter",   1000, -150, 200, totalPOT);
   Spectrum* Sflashzcenter   = new Spectrum("flash_zcenter",   1000, 0, 15000, totalPOT);
   Spectrum* Sflashtimewidth = new Spectrum("flash_timewidth", 1000, 0, 0.6, totalPOT);
 
+  Spectrum* Sgeanttruetime  = new Spectrum("geant_true_time", 30000, 0., 20000, totalPOT);
 
-  for(int i = 0; i < 201; i++) {
+  for(int i = 0; i < 100/*evts*/; i++) {
 
     if(i%100 == 0) cout << "\t... " << i << endl;
 
@@ -91,6 +92,13 @@ int main(int argc, char* argv[]) {
       Sflashycenter   ->Fill(anatree->flash_ycenter[fls]);
       Sflashzcenter   ->Fill(anatree->flash_zcenter[fls]);
       Sflashtimewidth ->Fill(anatree->flash_timewidth[fls]);
+    }
+    bool doneForThisEvent = false;
+    for (int geantpar = 0; geantpar < anatree->geant_list_size; geantpar++) {
+      if (!doneForThisEvent && anatree->origin[geantpar] == 1 && anatree->process_primary[geantpar]==1) {
+        Sgeanttruetime->Fill(anatree->StartT[geantpar]);
+        doneForThisEvent = true;
+      }
     }
 
     
@@ -141,6 +149,8 @@ int main(int argc, char* argv[]) {
   Sflashycenter   ->Save();
   Sflashzcenter   ->Save();
   Sflashtimewidth ->Save();
+
+  Sgeanttruetime  ->Save();
 
   cout << endl << endl << "********************************" << endl;
   cout << "Total events:     " << evts << endl;

@@ -5,6 +5,10 @@
 #include <iomanip>
 #include <string>
 
+#include <TSystem.h>
+#include <TApplication.h>
+#include <TCanvas.h>
+#include "TROOT.h"
 #include <TH1D.h>
 
 using namespace std;
@@ -76,8 +80,16 @@ void Spectrum::Fill(double value) {
 
 void Spectrum::Save() {
 
+  gROOT->SetBatch(kTRUE);
+
+  Double_t width = 600;
+  Double_t height = 600;
+  TCanvas * c1 = new TCanvas("c", "c", width, height);
+
+  h->Draw("histo");
+
   TString temp = fname;
-  h->SaveAs(temp + ".pdf","pdf");
+  c1->SaveAs(temp + ".pdf");
   h->SaveAs(temp + ".C","C");
 }
 

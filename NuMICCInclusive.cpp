@@ -21,8 +21,9 @@ int main(int argc, char* argv[]) {
   clock_t begin = clock();
 
   TApplication* rootapp = new TApplication("ROOT Application",&argc, argv);
+  gROOT->SetBatch(kTRUE);
 
-  string pattern = "/data/t2k/lar/uboone/prodgenie_numi_nu_uboone_MCC7/prodgenie_numi_nu_cosmic_uboone_merged_gen_g4_detsim_reco1_reco2_ana_2.root";
+  string pattern = "/data/t2k/lar/uboone/prodgenie_numi_nu_uboone_MCC7/prodgenie_numi_nu_cosmic_uboone_merged_gen_g4_detsim_reco1_reco2_ana.root";
 
   bool evalPOT = true;
   double totalPOT = 0.;
@@ -65,6 +66,7 @@ int main(int argc, char* argv[]) {
   int counter = 0.;  
 
   Spectrum* Sflashtime      = new Spectrum("flash_time",      300000, -3000, 3000, totalPOT);
+  Spectrum* Sflashtime20pe  = new Spectrum("flash_time_40",   300000, -3000, 3000, totalPOT);    
   Spectrum* Sflashpe        = new Spectrum("flash_pe",        1000, 0, 100000, totalPOT);
   Spectrum* Sflashycenter   = new Spectrum("flash_ycenter",   1000, -150, 200, totalPOT);
   Spectrum* Sflashzcenter   = new Spectrum("flash_zcenter",   1000, 0, 15000, totalPOT);
@@ -72,7 +74,7 @@ int main(int argc, char* argv[]) {
 
   Spectrum* Sgeanttruetime  = new Spectrum("geant_true_time", 30000, 0., 20000, totalPOT);
 
-  for(int i = 0; i < 100/*evts*/; i++) {
+  for(int i = 0; i < evts; i++) {
 
     if(i%100 == 0) cout << "\t... " << i << endl;
 
@@ -92,6 +94,7 @@ int main(int argc, char* argv[]) {
       Sflashycenter   ->Fill(anatree->flash_ycenter[fls]);
       Sflashzcenter   ->Fill(anatree->flash_zcenter[fls]);
       Sflashtimewidth ->Fill(anatree->flash_timewidth[fls]);
+      if (anatree->flash_pe[fls] > 40) Sflashtime20pe->Fill(anatree->flash_time[fls]);
     }
     bool doneForThisEvent = false;
     for (int geantpar = 0; geantpar < anatree->geant_list_size; geantpar++) {
@@ -145,6 +148,7 @@ int main(int argc, char* argv[]) {
   }
 
   Sflashtime      ->Save();
+  Sflashtime20pe  ->Save();
   Sflashpe        ->Save();
   Sflashycenter   ->Save();
   Sflashzcenter   ->Save();

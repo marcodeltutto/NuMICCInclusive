@@ -3,9 +3,9 @@
 echo "Type DoSubmit to submit jobs to the cluster." 
 
 
-logpath=/home/deltutto/NuMICCInclusive/logs
+logpath=/home/deltutto/NuMICCInclusive/log
 mkdir -p $logpath
-outdir=/home/deltutto/NuMICCInclusive/outputs
+outdir=/home/deltutto/NuMICCInclusive/out
 mkdir -p $outdir
 
 
@@ -21,8 +21,8 @@ DoSubmit() {
   echo Submitting job now.
   echo
   echo  
-  echo qsub -l cput=10:00:00 -l walltime=10:00:00 job_NuMICCInclusive.sh
-  qsub -l cput=10:00:00 -l walltime=10:00:00 job_NuMICCInclusive.sh
+  echo qsub -l cput=10:00:00 -l walltime=10:00:00 -o $olog -e $elog -v outdir=$outdir job_NuMICCInclusive.sh
+  qsub -l cput=10:00:00 -l walltime=10:00:00 -o $olog -e $elog -v outdir=$outdir job_NuMICCInclusive.sh
   echo
 
 }

@@ -109,8 +109,10 @@ void Spectrum::Save() {
   latex->Draw();
 
   TString temp = fname;
-  c1->SaveAs(temp + ".pdf");
-  c1->SaveAs(temp + ".C","C");
+  TString temp2 = "./output/" + temp;
+
+  c1->SaveAs(temp2 + ".pdf");
+  c1->SaveAs(temp2 + ".C","C");
 }
 
 

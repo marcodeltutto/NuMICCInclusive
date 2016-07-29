@@ -3,9 +3,9 @@
 echo "Type DoSubmit to submit jobs to the cluster." 
 
 
-logpath=/home/deltutto/NuMICCInclusive/log
+logpath=/home/deltutto/NuMICCInclusive/joblog
 mkdir -p $logpath
-outdir=/home/deltutto/NuMICCInclusive/out
+outdir=/home/deltutto/NuMICCInclusive/jobout
 mkdir -p $outdir
 
 

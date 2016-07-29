@@ -10,6 +10,7 @@
 #include <TCanvas.h>
 #include "TROOT.h"
 #include <TH1D.h>
+#include <TLatex.h>
 
 using namespace std;
 
@@ -17,7 +18,7 @@ class Spectrum {
 
   public :
 
-  Spectrum(string name, int nbins, double xlow, double xup, double POT);
+  Spectrum(string name, string title, int nbins, double xlow, double xup, double POT);
   Spectrum(TH1D* hin, double POT);
   virtual ~Spectrum();
   TH1D* ToTH1D();
@@ -31,22 +32,40 @@ class Spectrum {
   double fPOT;
   TH1D *h;
   string fname;
-
+  TLatex *latex;
 };
 
 #endif
 #ifdef Spectrum_cxx
 
-Spectrum::Spectrum(string name, int nbins, double xlow, double xup, double POT) {
+Spectrum::Spectrum(string name, string title, int nbins, double xlow, double xup, double POT) {
 
   fPOT = POT;
   fname = name;
 
-  std::ostringstream title;
-  title << fname << " @ " << fPOT << " POT"; 
-  std::string titlestr = title.str();
+  //std::ostringstream title;
+  //title << fname << " @ " << fPOT << " POT"; 
+  //std::string titlestr = title.str();
 
-  h = new TH1D(name.c_str(), titlestr.c_str(), (Int_t)nbins, (Double_t)xlow, (Double_t)xup);
+  h = new TH1D(name.c_str(), title.c_str(), (Int_t)nbins, (Double_t)xlow, (Double_t)xup);
+
+  std::ostringstream ltx;
+  ltx << fPOT << " POT";
+  std::string ltxstr = ltx.str();
+
+  double x = 0.84;
+  double y = 0.52;
+  double size = 25;
+  int color = 1;
+  int font = 43;
+  int align = 32;
+  latex = new TLatex(x, y, ltxstr.c_str());
+  latex->SetNDC();
+  latex->SetTextSize(size);
+  latex->SetTextColor(color);
+  latex->SetTextFont(font);
+  latex->SetTextAlign(align);
+  //latex->Draw();
 
 }
 
@@ -87,10 +106,11 @@ void Spectrum::Save() {
   TCanvas * c1 = new TCanvas("c", "c", width, height);
 
   h->Draw("histo");
+  latex->Draw();
 
   TString temp = fname;
   c1->SaveAs(temp + ".pdf");
-  h->SaveAs(temp + ".C","C");
+  c1->SaveAs(temp + ".C","C");
 }
 
 

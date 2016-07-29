@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////
 // This class has been automatically generated on
-// Thu Jul 28 15:38:30 2016 by ROOT version 5.34/21
+// Thu Jul 28 16:15:46 2016 by ROOT version 6.06/04
 // from TTree anatree/analysis tree
 // found on file: /data/t2k/lar/uboone/prodgenie_numi_nu_uboone_MCC7/prodgenie_numi_nu_cosmic_uboone_merged_gen_g4_detsim_reco1_reco2_ana.root
 //////////////////////////////////////////////////////////
@@ -13,14 +13,16 @@
 #include <TFile.h>
 
 // Header file for the classes stored in the TTree if any.
-#include "/build/bellenot/source/root_v5.34.21/root/cint/cint/lib/prec_stl/vector"
+#include "vector"
 
-// Fixed size dimensions of array or collections stored in the TTree if any.
+using namespace std;
 
 class AnaNuMI {
 public :
    TTree          *fChain;   //!pointer to the analyzed TTree or TChain
    Int_t           fCurrent; //!current Tree number in a TChain
+
+// Fixed size dimensions of array or collections stored in the TTree if any.
 
    // Declaration of leaf types
    Int_t           run;

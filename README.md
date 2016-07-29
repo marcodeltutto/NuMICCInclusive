@@ -2,6 +2,10 @@
 
 Code to study NuMI NuMu CC Inclusive Cross Section at MicroBooNE.
 
+## Setup
+
+Run `source setupNuMICCInclusive.sh`.
+
 ## Compile
 
 Compile with `make`.

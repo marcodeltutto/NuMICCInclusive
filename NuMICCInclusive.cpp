@@ -21,13 +21,22 @@ int main(int argc, char* argv[]) {
 
   clock_t begin = clock();
 
+  string beam  = argv[1];
+  string dopot = argv[2];
+  cout << endl << "Working with the " << beam << " beam." << endl;
+
   TApplication* rootapp = new TApplication("ROOT Application",&argc, argv);
   gROOT->SetBatch(kTRUE);
 
-  string pattern = "/data/t2k/lar/uboone/prodgenie_numi_nu_uboone_MCC7/prodgenie_numi_nu_cosmic_uboone_merged_gen_g4_detsim_reco1_reco2_ana.root";
+  string pattern;
+  if(beam == "numi") pattern = "/data/t2k/lar/uboone/prodgenie_numi_nu_uboone_MCC7/prodgenie_numi_nu_cosmic_uboone_merged_gen_g4_detsim_reco1_reco2_ana.root";
+  if(beam == "bnb")  pattern = "/pnfs/uboone/persistent/users/aschu/MC_BNB_Cosmic/prodgenie_bnb_nu_cosmic_uboone_v05_08_00_anatree.root";
 
-  bool evalPOT = true;
+  bool evalPOT = false;
   double totalPOT = 0.;
+  if (dopot == "pot") evalPOT = true;
+  else totalPOT = 1.;
+
   if (evalPOT) {
 
     cout << " ----- " << endl;
@@ -51,6 +60,8 @@ int main(int argc, char* argv[]) {
   TChain *cflux;
   cflux = new TChain("analysistree/anatree");
   cflux->Add(pattern.c_str());
+
+  cout << "Using file: " << pattern << endl;
 
   int Nfiles = cflux->GetNtrees();
   cout << "Number of files: " << Nfiles << endl;

@@ -9,6 +9,8 @@
 #include <TApplication.h>
 #include <TChain.h>
 #include "TThread.h"
+#include "THStack.h"
+#include "TLegend.h"
 
 #include "SelectionTools.hpp"
 #include "AnaNuMI.h"
@@ -17,7 +19,7 @@
 
 using namespace std;
 
-//...
+//____________________________________________________________________________________________________
 struct CutPlots {
 
   Spectrum* Snuenergy_numu;
@@ -28,12 +30,16 @@ struct CutPlots {
 
 };
 
+//____________________________________________________________________________________________________
 void InstantiateIntermidiatePlots(std::map<std::string,CutPlots> &cutToPlotsMap, double totalPOT) {
 
   std::vector<std::string> cutname;
-  cutname.resize(2);
+  cutname.resize(5);
   cutname.at(0) = "flashtag";
   cutname.at(1) = "vertexcontained";
+  cutname.at(2) = "flashmatch";
+  cutname.at(3) = "trackcontained";
+  cutname.at(4) = "longtrack";
 
   for (int i = 0; i < cutname.size(); i++) {
     CutPlots cutplots;
@@ -46,6 +52,7 @@ void InstantiateIntermidiatePlots(std::map<std::string,CutPlots> &cutToPlotsMap,
   }
 }
 
+//____________________________________________________________________________________________________
 void MakeIntermidiatePlots(CutPlots cutplots, AnaNuMI * anatree){
 
   if(anatree->ccnc_truth[0] == 0 || anatree->nuPDG_truth[0]==14) cutplots.Snuenergy_numu   -> Fill(anatree->enu_truth[0]);
@@ -55,32 +62,72 @@ void MakeIntermidiatePlots(CutPlots cutplots, AnaNuMI * anatree){
 
 }
 
+//____________________________________________________________________________________________________
 void SaveIntermidiatePlots(std::map<std::string,CutPlots> &cutToPlotsMap) {
 
+  TFile *f = new TFile("thstacktest.root","RECREATE");
+  f->cd();
+
   for (std::map<std::string,CutPlots>::iterator it=cutToPlotsMap.begin(); it!=cutToPlotsMap.end(); ++it) {
-    std::cout << "Saving plot " << it->first << endl;
+    std::string label = it->first;
+    std::cout << "Saving plot " << label << endl;
     CutPlots cutplots = it->second;
+
+    THStack *hs = new THStack(("hs_"+label).c_str(),(";True Neutrino Energy [GeV];Selected events up to " + label).c_str());
+    TH1D* h1 = cutplots.Snuenergy_anumu->ToTH1D();
+    h1->SetLineColor(kGray);
+    h1->SetFillColor(kGray);
+    hs->Add(h1);
+    TH1D* h2 = cutplots.Snuenergy_nue  ->ToTH1D();
+    h2->SetLineColor(kOrange+3);
+    h2->SetFillColor(kOrange+3);
+    hs->Add(h2);
+    TH1D* h3 = cutplots.Snuenergy_nc   ->ToTH1D();
+    h3->SetLineColor(kGreen+2);
+    h3->SetFillColor(kGreen+2);
+    hs->Add(h3);
+    TH1D* h4 = cutplots.Snuenergy_numu ->ToTH1D();
+    h4->SetLineColor(kRed+1);
+    h4->SetFillColor(kRed+1);
+    hs->Add(h4);
+
+    TLegend *leg = new TLegend(0.1,0.7,0.48,0.9);
+    //leg->SetHeader("The Legend Title","C"); // option "C" allows to center the header
+    leg->AddEntry(h4,"#nu_{#mu}","f");
+    leg->AddEntry(h3,"NC","f");
+    leg->AddEntry(h2,"#nu_{e}","f");
+    leg->AddEntry(h1,"#bar{#nu}_{#mu}","f");
+
+    //hs->SaveAs("thstacktest.root");
+    hs->Write();
+    leg->Write("legend");
+
+
     cutplots.Snuenergy_numu ->Save();
     cutplots.Snuenergy_anumu->Save();
     cutplots.Snuenergy_nue  ->Save();
     cutplots.Snuenergy_nc   ->Save();
 
   }
-
+  f->Close();
 }
 
-
+//____________________________________________________________________________________________________
+//____________________________________________________________________________________________________
+//____________________________________________________________________________________________________
 int main(int argc, char* argv[]) {
 
   clock_t begin = clock();
 
-  if (argc != 3) {
-    cout << "Provide two arguments!" << endl;
+  if (argc != 4) {
+    cout << "Provide 3 arguments!" << endl;
+    cout << "./NuMICCInclusive bnb pot maxentries." << endl;
     exit(0);
   }
 
-  string beam  = argv[1];
-  string dopot = argv[2];
+  string beam       = argv[1];
+  string dopot      = argv[2];
+  int    maxEntries = atoi(argv[3]);
   cout << endl << "Working with the " << beam << " beam." << endl;
 
   TApplication* rootapp = new TApplication("ROOT Application",&argc, argv);
@@ -150,7 +197,7 @@ int main(int argc, char* argv[]) {
   Spectrum* Sflashtimewidth = new Spectrum("flash_timewidth", ";Flash Time Width [#mus];Entries per bin", 1000, 0, 0.6, totalPOT);
 
   Spectrum* Sgeanttruetime_neutrino  = new Spectrum("geant_true_time_neutrino", ";Geant True Time [ns];Entries per bin",    30000, 0., 20000, totalPOT);
-  Spectrum* Sgeanttruetime_cosmic    = new Spectrum("geant_true_time_cosmic",   ";Geant True Time [ns];Entries per bin",    30000, 0., 20000, totalPOT);
+  Spectrum* Sgeanttruetime_cosmic    = new Spectrum("geant_true_time_cosmic",   ";Geant True Time [ns];Entries per bin",    30000, -5000000, 4000000, totalPOT);
 
   Spectrum2D* Sfls_timeVSpe = new Spectrum2D("fls_timeVSpe",  ";Flash Time [#mus]; Flash PE",             2000, -10, 40, 5000, 0, 5000, totalPOT);
 
@@ -158,7 +205,9 @@ int main(int argc, char* argv[]) {
   std::map<std::string,CutPlots> cutToPlotsMap;
   InstantiateIntermidiatePlots(cutToPlotsMap,totalPOT);
 
-  for(int i = 0; i < 301/*evts*/; i++) {
+  if(maxEntries > 0.) evts = maxEntries;
+
+  for(int i = 0; i < evts; i++) {
 
     if(i%100 == 0) cout << "\t... " << i << endl;
 
@@ -182,13 +231,15 @@ int main(int argc, char* argv[]) {
       Sfls_timeVSpe->Fill(anatree->flash_time[fls], anatree->flash_pe[fls]);
     }
     bool doneForThisEvent = false;
+    bool doneForThisEvent_cosmic = false;
     for (int geantpar = 0; geantpar < anatree->geant_list_size; geantpar++) {
       if (!doneForThisEvent && anatree->origin[geantpar] == 1 && anatree->process_primary[geantpar]==1) {
         Sgeanttruetime_neutrino->Fill(anatree->StartT[geantpar]);
         doneForThisEvent = true;
       }
-      if (anatree->origin[geantpar] == 2 && anatree->process_primary[geantpar]==1) {
+      if (!doneForThisEvent_cosmic &&anatree->origin[geantpar] == 2 && anatree->process_primary[geantpar]==1) {
         Sgeanttruetime_cosmic->Fill(anatree->StartT[geantpar]);
+        doneForThisEvent_cosmic = true;
       }
     }
 
@@ -224,12 +275,15 @@ int main(int argc, char* argv[]) {
 
     // Flash matching
     if (!selection->IsFlashMatched(trackCandidate, theFlash)) continue;
+    MakeIntermidiatePlots(cutToPlotsMap.find("flashmatch")->second,anatree);
 
     // Track must be contained
     if (!selection->InFV("track", trackCandidate)) continue;
+    MakeIntermidiatePlots(cutToPlotsMap.find("trackcontained")->second,anatree);
 
     // Minimum track length
     if (!selection->IsLongTrack(trackCandidate)) continue;
+    MakeIntermidiatePlots(cutToPlotsMap.find("longtrack")->second,anatree);
 
     selectedEvents++;
     newtree->Fill();
@@ -267,7 +321,7 @@ int main(int argc, char* argv[]) {
 
 
   //rootapp->Run();
-  //rootapp->Terminate(0);
+  rootapp->Terminate(0);
 
   clock_t end = clock();
   double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;

@@ -214,8 +214,6 @@ bool SelectionTools::IsLongTrack(int TrackID) {
   
   if (trackRange > lengthcut) return true;
   return false;
-
-
 }
 
 

@@ -53,8 +53,8 @@ Spectrum::Spectrum(string name, string title, int nbins, double xlow, double xup
   ltx << fPOT << " POT";
   std::string ltxstr = ltx.str();
 
-  double x = 0.84;
-  double y = 0.52;
+  double x = 0.25;//0.84;
+  double y = 0.92827;//0.52;
   double size = 25;
   int color = 1;
   int font = 43;
@@ -101,8 +101,12 @@ void Spectrum::Save() {
 
   gROOT->SetBatch(kTRUE);
 
-  Double_t width = 600;
-  Double_t height = 600;
+  h->GetXaxis()->CenterTitle();
+  h->GetYaxis()->CenterTitle();
+  h->GetYaxis()->SetTitleOffset(1.16);
+
+  Double_t width = 700;
+  Double_t height = 500;
   TCanvas * c1 = new TCanvas("c", "c", width, height);
 
   h->Draw("histo");

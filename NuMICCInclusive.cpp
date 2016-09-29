@@ -31,6 +31,40 @@ struct CutPlots {
 };
 
 //____________________________________________________________________________________________________
+void ActivateBranches(AnaNuMI *anatree) {
+
+  anatree->fChain->SetBranchStatus("*",0);
+  anatree->fChain->SetBranchStatus("ccnc_truth",1);
+  anatree->fChain->SetBranchStatus("enu_truth",1);
+  anatree->fChain->SetBranchStatus("flash_time",1);
+  anatree->fChain->SetBranchStatus("flash_pe",1);
+  anatree->fChain->SetBranchStatus("flash_ycenter",1);
+  anatree->fChain->SetBranchStatus("flash_zcenter",1);
+  anatree->fChain->SetBranchStatus("flash_timewidth",1);
+  anatree->fChain->SetBranchStatus("geant_list_size",1);
+  anatree->fChain->SetBranchStatus("origin",1);
+  anatree->fChain->SetBranchStatus("process_primary",1);
+  anatree->fChain->SetBranchStatus("StartT",1);
+  anatree->fChain->SetBranchStatus("no_flashes",1);
+  anatree->fChain->SetBranchStatus("nvtx_pandoraNu",1);
+  anatree->fChain->SetBranchStatus("ntracks_pandoraNu",1);
+  anatree->fChain->SetBranchStatus("vtxx_pandoraNu",1);
+  anatree->fChain->SetBranchStatus("vtxy_pandoraNu",1);
+  anatree->fChain->SetBranchStatus("vtxz_pandoraNu",1);
+  anatree->fChain->SetBranchStatus("trkendx_pandoraNu",1);
+  anatree->fChain->SetBranchStatus("trkendy_pandoraNu",1);
+  anatree->fChain->SetBranchStatus("trkendz_pandoraNu",1);
+  anatree->fChain->SetBranchStatus("trkstartx_pandoraNu",1);
+  anatree->fChain->SetBranchStatus("trkstarty_pandoraNu",1);
+  anatree->fChain->SetBranchStatus("trkstartx_pandoraNu",1);
+  anatree->fChain->SetBranchStatus("trktheta_pandoraNu",1);
+  anatree->fChain->SetBranchStatus("vx_flux",1);
+  anatree->fChain->SetBranchStatus("vy_flux",1);
+  anatree->fChain->SetBranchStatus("vz_flux",1);
+  //anatree->fChain->SetBranchStatus("",1);
+}
+
+//____________________________________________________________________________________________________
 void InstantiateIntermidiatePlots(std::map<std::string,CutPlots> &cutToPlotsMap, double totalPOT) {
 
   std::vector<std::string> cutname;
@@ -41,7 +75,7 @@ void InstantiateIntermidiatePlots(std::map<std::string,CutPlots> &cutToPlotsMap,
   cutname.at(3) = "trackcontained";
   cutname.at(4) = "longtrack";
 
-  for (int i = 0; i < cutname.size(); i++) {
+  for (unsigned int i = 0; i < cutname.size(); i++) {
     CutPlots cutplots;
     cutplots.Snuenergy_numu  = new Spectrum("nuenergy_numu_"+cutname.at(i),  "#nu_{#mu};Neutrino Energy [GeV];Selected Events up to "+cutname.at(i), 100, 0, 10, totalPOT);
     cutplots.Snuenergy_anumu = new Spectrum("nuenergy_anumu_"+cutname.at(i), "#bar{#nu}_{#mu};Neutrino Energy [GeV];Selected Events up to "+cutname.at(i), 100, 0, 10, totalPOT);
@@ -92,16 +126,13 @@ void SaveIntermidiatePlots(std::map<std::string,CutPlots> &cutToPlotsMap) {
     hs->Add(h4);
 
     TLegend *leg = new TLegend(0.1,0.7,0.48,0.9);
-    //leg->SetHeader("The Legend Title","C"); // option "C" allows to center the header
     leg->AddEntry(h4,"#nu_{#mu}","f");
     leg->AddEntry(h3,"NC","f");
     leg->AddEntry(h2,"#nu_{e}","f");
     leg->AddEntry(h1,"#bar{#nu}_{#mu}","f");
 
-    //hs->SaveAs("thstacktest.root");
     hs->Write();
     leg->Write("legend");
-
 
     cutplots.Snuenergy_numu ->Save();
     cutplots.Snuenergy_anumu->Save();
@@ -140,7 +171,7 @@ int main(int argc, char* argv[]) {
   bool evalPOT = false;
   double totalPOT = 0.;
   if (dopot == "pot") evalPOT = true;
-  else totalPOT = 1.;
+  if (maxEntries > 0) evalPOT = false;
 
   if (evalPOT) {
 
@@ -161,6 +192,7 @@ int main(int argc, char* argv[]) {
     cout << "| Simulated POT: " << totalPOT << endl;
     cout << " ----- " << endl << endl;
   } // end if evalPOT
+  else totalPOT = -1.;
 
   TChain *cflux;
   cflux = new TChain("analysistree/anatree");
@@ -175,6 +207,7 @@ int main(int argc, char* argv[]) {
   cout << "Number of events used is: " << evts << endl;
 
   AnaNuMI * anatree = new AnaNuMI(cflux);
+  ActivateBranches(anatree);
 
   std::string TrackProdName  = "pandoraNu";
   std::string VertexProdName = "pandoraNu";
@@ -190,7 +223,7 @@ int main(int argc, char* argv[]) {
   int counter = 0.;  
 
   Spectrum* Sflashtime      = new Spectrum("flash_time",      ";Flash Time [#mus];Entries per bin",       300000, -3000, 3000, totalPOT);
-  Spectrum* Sflashtime20pe  = new Spectrum("flash_time_40",   ";Flash Time [#mus];Entries per bin",       300000, -3000, 3000, totalPOT);    
+  Spectrum* Sflashtime50pe  = new Spectrum("flash_time_50",   ";Flash Time [#mus];Entries per bin",       300000, -3000, 3000, totalPOT);    
   Spectrum* Sflashpe        = new Spectrum("flash_pe",        ";Flash PE;Entries per bin",                1000, 0, 100000, totalPOT);
   Spectrum* Sflashycenter   = new Spectrum("flash_ycenter",   ";Flash Y Center [cm];Entries per bin",     1000, -150, 200, totalPOT);
   Spectrum* Sflashzcenter   = new Spectrum("flash_zcenter",   ";Flash Z Center [cm];Entries per bin",     1000, 0, 15000, totalPOT);
@@ -199,7 +232,9 @@ int main(int argc, char* argv[]) {
   Spectrum* Sgeanttruetime_neutrino  = new Spectrum("geant_true_time_neutrino", ";Geant True Time [ns];Entries per bin",    30000, 0., 20000, totalPOT);
   Spectrum* Sgeanttruetime_cosmic    = new Spectrum("geant_true_time_cosmic",   ";Geant True Time [ns];Entries per bin",    30000, -5000000, 4000000, totalPOT);
 
-  Spectrum2D* Sfls_timeVSpe = new Spectrum2D("fls_timeVSpe",  ";Flash Time [#mus]; Flash PE",             2000, -10, 40, 5000, 0, 5000, totalPOT);
+  Spectrum2D* Sfls_timeVSpe = new Spectrum2D("fls_timeVSpe",  ";Flash Time [#mus];Flash PE",             2000, -10, 40, 5000, 0, 5000, totalPOT);
+
+  Spectrum2D* Sfls_timeVSnu_distance = new Spectrum2D("fls_timeVSnu_distance", ";Flash Time [#mus];#nu flight path [cm]",100,0,30,1000,0,80000, totalPOT);
 
   // This is a map: cutname <-> spectrum array
   std::map<std::string,CutPlots> cutToPlotsMap;
@@ -227,7 +262,12 @@ int main(int argc, char* argv[]) {
       Sflashycenter   ->Fill(anatree->flash_ycenter[fls]);
       Sflashzcenter   ->Fill(anatree->flash_zcenter[fls]);
       Sflashtimewidth ->Fill(anatree->flash_timewidth[fls]);
-      if (anatree->flash_pe[fls] > 40) Sflashtime20pe->Fill(anatree->flash_time[fls]);
+      if (anatree->flash_pe[fls] > 50) {
+        Sflashtime50pe->Fill(anatree->flash_time[fls]);
+        int k = 0;
+        double distance = sqrt(pow(54.999*100-anatree->vx_flux[k],2)+pow(74.461*100-anatree->vy_flux[k],2)+pow(677.611*100-anatree->vz_flux[k],2)); 
+        Sfls_timeVSnu_distance->Fill(anatree->flash_time[fls],distance);
+      }
       Sfls_timeVSpe->Fill(anatree->flash_time[fls], anatree->flash_pe[fls]);
     }
     bool doneForThisEvent = false;
@@ -292,12 +332,13 @@ int main(int argc, char* argv[]) {
   }
 
   Sflashtime      ->Save();
-  Sflashtime20pe  ->Save();
+  Sflashtime50pe  ->Save();
   Sflashpe        ->Save();
   Sflashycenter   ->Save();
   Sflashzcenter   ->Save();
   Sflashtimewidth ->Save();
   Sfls_timeVSpe   ->Save();
+  Sfls_timeVSnu_distance ->Save();
 
   Sgeanttruetime_neutrino  ->Save();
   Sgeanttruetime_cosmic    ->Save();
@@ -318,13 +359,12 @@ int main(int argc, char* argv[]) {
 
 
 
-
-
-  //rootapp->Run();
-  rootapp->Terminate(0);
-
   clock_t end = clock();
   double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
   cout << endl << endl << "Computing time: " << elapsed_secs << " seconds = " << elapsed_secs/60. << " minutes." << endl << endl;
+
+  //rootapp->Run();
+  //rootapp->Terminate(0);
+
   return 0;
 }

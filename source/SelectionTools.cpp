@@ -62,7 +62,19 @@ void SelectionTools::CreateVertexTrackAssociation(std::map< int,std::vector<int>
       TrackRange = sqrt(pow(fanatree->trkstartx_pandoraNu[j] - fanatree->trkendx_pandoraNu[j],2) 
                       + pow(fanatree->trkstarty_pandoraNu[j] - fanatree->trkendy_pandoraNu[j],2) 
                       + pow(fanatree->trkstartz_pandoraNu[j] - fanatree->trkendz_pandoraNu[j],2));
-
+/*
+      std::cout << "vtxx is " << fanatree->vtxx_pandoraNu[v] << std::endl;
+      std::cout << "vtxy is " << fanatree->vtxy_pandoraNu[v] << std::endl;
+      std::cout << "vtxz is " << fanatree->vtxz_pandoraNu[v] << std::endl;
+      std::cout << "trkstartx is " << fanatree->trkstartx_pandoraNu[j] << std::endl;
+      std::cout << "trkstarty is " << fanatree->trkstarty_pandoraNu[j] << std::endl;
+      std::cout << "trkstartz is " << fanatree->trkstartz_pandoraNu[j] << std::endl;
+      std::cout << "trkendx is " << fanatree->trkendx_pandoraNu[j] << std::endl;
+      std::cout << "trkendy is " << fanatree->trkendy_pandoraNu[j] << std::endl;
+      std::cout << "trkendz is " << fanatree->trkendz_pandoraNu[j] << std::endl;
+      std::cout << "------------" << std::endl;
+      std::cout << diststart << " " << distend << " " << TrackRange << std::endl;
+*/
       // If the track vertex distance is within cut, increase track count
       if(diststart < distcut || distend < distcut) {
         VertexTrackCollection.insert(std::pair< int,std::vector<int> >(v,std::vector<int>()));
@@ -94,17 +106,19 @@ void SelectionTools::SelectVertexTrackForward(std::map< int,std::vector<int> > &
                       + pow(fanatree->trkstartz_pandoraNu[TrackID] - fanatree->trkendz_pandoraNu[TrackID],2));
       NormFactor += TrackRange;
       WeightedCosTheta += TrackRange*cos(fanatree->trktheta_pandoraNu[TrackID]);
+
     } // end loop tracks
+
+    // Make average
+    WeightedCosTheta /= NormFactor;
+
+    // Check for flatest angle (also backwards pointing)
+    if(fabs(WeightedCosTheta) > VertexCosTheta) {
+      vertexCandidate = VertexID;
+      VertexCosTheta = fabs(WeightedCosTheta);
+    }
+
   } // end loop vertices  
-
-  // Make average
-  WeightedCosTheta /= NormFactor;
-
-  // Check for flatest angle (also backwards pointing)
-  if(fabs(WeightedCosTheta) > VertexCosTheta) {
-    vertexCandidate = VertexID;
-    VertexCosTheta = fabs(WeightedCosTheta);
-  }
 
 }
 
@@ -118,7 +132,7 @@ bool SelectionTools::InFV(std::string type, int vertexCandidate) {
   if (type == "vertex") {
     x = fanatree->vtxx_pandoraNu[vertexCandidate];
     y = fanatree->vtxy_pandoraNu[vertexCandidate];
-    z = fanatree->vtxx_pandoraNu[vertexCandidate];
+    z = fanatree->vtxz_pandoraNu[vertexCandidate];
     
     return this->InFV(x,y,z);
 
@@ -136,7 +150,7 @@ bool SelectionTools::InFV(std::string type, int vertexCandidate) {
   
     bool end = this->InFV(x,y,z);
 
-    if (start || end) return true;
+    if (start && end) return true;
     return false;
 
   }
@@ -184,7 +198,7 @@ int SelectionTools::GetBestTrack(int vertexCandidate, std::map< int,std::vector<
 //____________________________________________________________________
 bool SelectionTools::IsFlashMatched(int trackCandidate, int theFlash) {
 
-  int    flash = theFlash;
+  int    flash = fanatree->flash_zcenter[theFlash];
   double start = fanatree->trkstartz_pandoraNu[trackCandidate]; 
   double end   = fanatree->trkendz_pandoraNu[trackCandidate];
   double distance;

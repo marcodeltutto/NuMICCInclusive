@@ -56,7 +56,7 @@ void ActivateBranches(AnaNuMI *anatree) {
   anatree->fChain->SetBranchStatus("trkendz_pandoraNu",1);
   anatree->fChain->SetBranchStatus("trkstartx_pandoraNu",1);
   anatree->fChain->SetBranchStatus("trkstarty_pandoraNu",1);
-  anatree->fChain->SetBranchStatus("trkstartx_pandoraNu",1);
+  anatree->fChain->SetBranchStatus("trkstartz_pandoraNu",1);
   anatree->fChain->SetBranchStatus("trktheta_pandoraNu",1);
   anatree->fChain->SetBranchStatus("vx_flux",1);
   anatree->fChain->SetBranchStatus("vy_flux",1);
@@ -143,6 +143,10 @@ void SaveIntermidiatePlots(std::map<std::string,CutPlots> &cutToPlotsMap) {
   f->Close();
 }
 
+double CalcLength(const double& x_1, const double& y_1, const double& z_1, const double& x_2, const double& y_2, const double& z_2) {
+    return sqrt(pow(x_1-x_2, 2) + pow(y_1-y_2, 2) + pow(z_1-z_2, 2));
+}
+
 //____________________________________________________________________________________________________
 //____________________________________________________________________________________________________
 //____________________________________________________________________________________________________
@@ -221,6 +225,7 @@ int main(int argc, char* argv[]) {
 
   int selectedEvents = 0.;
   int counter = 0.;  
+  int EventsWithFlash = 0, EventsVtxInFV = 0, EventsFlashMatched = 0, EventsTracksInFV = 0, EventsTrackLong = 0;
 
   Spectrum* Sflashtime      = new Spectrum("flash_time",      ";Flash Time [#mus];Entries per bin",       300000, -3000, 3000, totalPOT);
   Spectrum* Sflashtime50pe  = new Spectrum("flash_time_50",   ";Flash Time [#mus];Entries per bin",       300000, -3000, 3000, totalPOT);    
@@ -235,6 +240,8 @@ int main(int argc, char* argv[]) {
   Spectrum2D* Sfls_timeVSpe = new Spectrum2D("fls_timeVSpe",  ";Flash Time [#mus];Flash PE",             2000, -10, 40, 5000, 0, 5000, totalPOT);
 
   Spectrum2D* Sfls_timeVSnu_distance = new Spectrum2D("fls_timeVSnu_distance", ";Flash Time [#mus];#nu flight path [cm]",100,0,30,1000,0,80000, totalPOT);
+
+  Spectrum* Strk_range = new Spectrum("trk_range", ";Track Range [cm]; Selected Events",20,0,1000, totalPOT);
 
   // This is a map: cutname <-> spectrum array
   std::map<std::string,CutPlots> cutToPlotsMap;
@@ -293,11 +300,20 @@ int main(int argc, char* argv[]) {
     // Flash tag
     int theFlash = -1;
     if (selection->FlashTag(theFlash) == false) continue;
+    EventsWithFlash++;
     MakeIntermidiatePlots(cutToPlotsMap.find("flashtag")->second,anatree);
  
     // Create vertex-track association
     std::map< int,std::vector<int> > VertexTrackCollection;
     selection->CreateVertexTrackAssociation(VertexTrackCollection);  
+
+/*
+    std::cout << "******************* Printing map, event " << i << std::endl;
+    for (std::map<int,std::vector<int>>::iterator it=VertexTrackCollection.begin(); it!=VertexTrackCollection.end(); ++it)
+      for (unsigned int hj = 0; hj < (it->second).size(); hj++)
+        std::cout << it->first << " => " << (it->second)[hj] << '\n';
+    std::cout << "******************* " << std::endl;
+*/
 
     // Select the most forward going vertex-track association
     int vertexCandidate = -1;
@@ -305,6 +321,7 @@ int main(int argc, char* argv[]) {
 
     // Check if vertex candidate is contained in FV
     if (!selection->InFV("vertex", vertexCandidate)) continue;
+    EventsVtxInFV++;
     MakeIntermidiatePlots(cutToPlotsMap.find("vertexcontained")->second,anatree);
 
     // Get the longest track associated with the best vertex
@@ -315,15 +332,20 @@ int main(int argc, char* argv[]) {
 
     // Flash matching
     if (!selection->IsFlashMatched(trackCandidate, theFlash)) continue;
+    EventsFlashMatched++;
     MakeIntermidiatePlots(cutToPlotsMap.find("flashmatch")->second,anatree);
 
     // Track must be contained
     if (!selection->InFV("track", trackCandidate)) continue;
+    EventsTracksInFV++;
     MakeIntermidiatePlots(cutToPlotsMap.find("trackcontained")->second,anatree);
 
     // Minimum track length
     if (!selection->IsLongTrack(trackCandidate)) continue;
+    EventsTrackLong++;
     MakeIntermidiatePlots(cutToPlotsMap.find("longtrack")->second,anatree);
+
+    Strk_range->Fill(CalcLength(anatree->trkstartx_pandoraNu[trackCandidate], anatree->trkstartx_pandoraNu[trackCandidate], anatree->trkstartx_pandoraNu[trackCandidate], anatree->trkendz_pandoraNu[trackCandidate], anatree->trkendz_pandoraNu[trackCandidate], anatree->trkendz_pandoraNu[trackCandidate]));
 
     selectedEvents++;
     newtree->Fill();
@@ -343,6 +365,8 @@ int main(int argc, char* argv[]) {
   Sgeanttruetime_neutrino  ->Save();
   Sgeanttruetime_cosmic    ->Save();
  
+  Strk_range ->Save();
+
   SaveIntermidiatePlots(cutToPlotsMap);
 
   newtree->AutoSave();
@@ -353,8 +377,12 @@ int main(int argc, char* argv[]) {
   cout << "Total events:     " << evts << endl;
   cout << "Selected Events:  " << selectedEvents << endl;
   cout << "Ratio:            " << (double)selectedEvents/(double)evts << endl << endl << endl;
-  cout << "counter " << counter << endl;
 
+  std::cout << "number of events with flash > 50 PE : " << EventsWithFlash << endl;
+  std::cout << "number of events with vtx in FV : " << EventsVtxInFV << endl;
+  std::cout << "number of events with tracks matched within 80cm to flash : " << EventsFlashMatched << std::endl;
+  std::cout << "number of events with contained tracks : " << EventsTracksInFV << std::endl;
+  std::cout << "number of events with longest track > 75cm : " << EventsTrackLong << std::endl;
 
 
 

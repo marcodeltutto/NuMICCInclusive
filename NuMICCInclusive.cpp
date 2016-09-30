@@ -27,7 +27,14 @@ struct CutPlots {
   Spectrum* Snuenergy_nue;
   Spectrum* Snuenergy_nc;
   Spectrum* Snuenergy_cosmics;
+  Spectrum* Snuenergy_outfv;
 
+  Spectrum* Strklen_numu;
+  Spectrum* Strklen_anumu;
+  Spectrum* Strklen_nue;
+  Spectrum* Strklen_nc;
+  Spectrum* Strklen_cosmics;
+  Spectrum* Strklen_outfv;
 };
 
 //____________________________________________________________________________________________________
@@ -35,6 +42,10 @@ void ActivateBranches(AnaNuMI *anatree) {
 
   anatree->fChain->SetBranchStatus("*",0);
   anatree->fChain->SetBranchStatus("ccnc_truth",1);
+  anatree->fChain->SetBranchStatus("nuPDG_truth",1);
+  anatree->fChain->SetBranchStatus("nuvtxx_truth",1);
+  anatree->fChain->SetBranchStatus("nuvtxy_truth",1);
+  anatree->fChain->SetBranchStatus("nuvtxz_truth",1);
   anatree->fChain->SetBranchStatus("enu_truth",1);
   anatree->fChain->SetBranchStatus("flash_time",1);
   anatree->fChain->SetBranchStatus("flash_pe",1);
@@ -58,6 +69,8 @@ void ActivateBranches(AnaNuMI *anatree) {
   anatree->fChain->SetBranchStatus("trkstarty_pandoraNu",1);
   anatree->fChain->SetBranchStatus("trkstartz_pandoraNu",1);
   anatree->fChain->SetBranchStatus("trktheta_pandoraNu",1);
+  anatree->fChain->SetBranchStatus("trkpidbestplane_pandoraNu",1);
+  anatree->fChain->SetBranchStatus("trkorigin_pandoraNu",1);
   anatree->fChain->SetBranchStatus("vx_flux",1);
   anatree->fChain->SetBranchStatus("vy_flux",1);
   anatree->fChain->SetBranchStatus("vz_flux",1);
@@ -77,24 +90,133 @@ void InstantiateIntermidiatePlots(std::map<std::string,CutPlots> &cutToPlotsMap,
 
   for (unsigned int i = 0; i < cutname.size(); i++) {
     CutPlots cutplots;
-    cutplots.Snuenergy_numu  = new Spectrum("nuenergy_numu_"+cutname.at(i),  "#nu_{#mu};Neutrino Energy [GeV];Selected Events up to "+cutname.at(i), 100, 0, 10, totalPOT);
-    cutplots.Snuenergy_anumu = new Spectrum("nuenergy_anumu_"+cutname.at(i), "#bar{#nu}_{#mu};Neutrino Energy [GeV];Selected Events up to "+cutname.at(i), 100, 0, 10, totalPOT);
-    cutplots.Snuenergy_nue   = new Spectrum("nuenergy_nue_"+cutname.at(i),   "#nu_{e}/#bar{#nu}_{e};Neutrino Energy [GeV];Selected Events up to "+cutname.at(i), 100, 0, 10, totalPOT);
-    cutplots.Snuenergy_nc    = new Spectrum("nuenergy_nc_"+cutname.at(i),    "NC;Neutrino Energy [GeV];Selected Events up to "+cutname.at(i), 100, 0, 10, totalPOT);
+    cutplots.Snuenergy_numu    = new Spectrum("nuenergy_numu_"+cutname.at(i),  "#nu_{#mu};Neutrino Energy [GeV];Selected Events up to "+cutname.at(i),100,0,10,totalPOT);
+    cutplots.Snuenergy_anumu   = new Spectrum("nuenergy_anumu_"+cutname.at(i), "#bar{#nu}_{#mu};Neutrino Energy [GeV];Selected Events up to "+cutname.at(i),100,0,10,totalPOT);
+    cutplots.Snuenergy_nue     = new Spectrum("nuenergy_nue_"+cutname.at(i),   "#nu_{e}/#bar{#nu}_{e};Neutrino Energy [GeV];Selected Events up to "+cutname.at(i),100,0,10, totalPOT);
+    cutplots.Snuenergy_nc      = new Spectrum("nuenergy_nc_"+cutname.at(i),    "NC;Neutrino Energy [GeV];Selected Events up to "+cutname.at(i),100,0,10,totalPOT);
+    cutplots.Snuenergy_cosmics = new Spectrum("nuenergy_cosmics_"+cutname.at(i),"Cosmics;Neutrino Energy [GeV];Selected Events up to "+cutname.at(i),100,0,10,totalPOT);
+    cutplots.Snuenergy_outfv   = new Spectrum("nuenergy_outfv_"+cutname.at(i),"Outside FV;Neutrino Energy [GeV];Selected Events up to "+cutname.at(i),100,0,10,totalPOT);
+
+
+    cutplots.Strklen_numu      = new Spectrum("trklen_numu_"+cutname.at(i),  "#nu_{#mu};Track Length [cm];Selected Events up to "+cutname.at(i),20,0,1036.8,totalPOT);
+    cutplots.Strklen_anumu     = new Spectrum("trklen_anumu_"+cutname.at(i), "#bar{#nu}_{#mu};Track Length [cm];Selected Events up to "+cutname.at(i),20,0,1036.8,totalPOT);
+    cutplots.Strklen_nue       = new Spectrum("trklen_nue_"+cutname.at(i),   "#nu_{e};Track Length [cm];Selected Events up to "+cutname.at(i),20,0,1036.8,totalPOT);
+    cutplots.Strklen_nc        = new Spectrum("trklen_nc_"+cutname.at(i),    "NC;Track Length [cm];Selected Events up to "+cutname.at(i),20,0,1036.8,totalPOT);
+    cutplots.Strklen_cosmics   = new Spectrum("trklen_cosmics_"+cutname.at(i),"Cosmics;Neutrino Energy [GeV];Selected Events up to "+cutname.at(i),20,0,1036.8,totalPOT);
+    cutplots.Strklen_outfv     = new Spectrum("trklen_outfv_"+cutname.at(i),"Outside FV;Neutrino Energy [GeV];Selected Events up to "+cutname.at(i),20,0,1036.8,totalPOT);
 
     cutToPlotsMap.emplace(cutname[i],cutplots);
+
+
+
+
   }
 }
 
 //____________________________________________________________________________________________________
-void MakeIntermidiatePlots(CutPlots cutplots, AnaNuMI * anatree){
+void MakeIntermidiatePlots(CutPlots cutplots, AnaNuMI * anatree, int bestTrackID){
 
-  if(anatree->ccnc_truth[0] == 0 || anatree->nuPDG_truth[0]==14) cutplots.Snuenergy_numu   -> Fill(anatree->enu_truth[0]);
-  if(anatree->ccnc_truth[0] == 0 || anatree->nuPDG_truth[0]==-14) cutplots.Snuenergy_anumu -> Fill(anatree->enu_truth[0]);
-  if(anatree->ccnc_truth[0] == 0 || anatree->nuPDG_truth[0]==12 || anatree->nuPDG_truth[0]==-12) cutplots.Snuenergy_nue -> Fill(anatree->enu_truth[0]);
-  if(anatree->ccnc_truth[0] == 1) cutplots.Snuenergy_nc -> Fill(anatree->enu_truth[0]);
+  // We don't have a candidate track
+  if(bestTrackID == -1) {
+    if(anatree->ccnc_truth[0] == 0) {
+      
+      if(!SelectionTools::InFV(anatree->nuvtxx_truth[0],
+			       anatree->nuvtxy_truth[0],
+			       anatree->nuvtxz_truth[0])
+	 && anatree->nuPDG_truth[0]==14) {
+
+	cutplots.Snuenergy_outfv -> Fill(anatree->enu_truth[0]);
+      }
+      else if(anatree->nuPDG_truth[0]==14) cutplots.Snuenergy_numu   -> Fill(anatree->enu_truth[0]);
+      else if(anatree->nuPDG_truth[0]==-14) cutplots.Snuenergy_anumu -> Fill(anatree->enu_truth[0]);
+      else if(anatree->nuPDG_truth[0]==12 || anatree->nuPDG_truth[0]==-12) cutplots.Snuenergy_nue -> Fill(anatree->enu_truth[0]);
+      
+    } // end if cc
+    else if(anatree->ccnc_truth[0] == 1) cutplots.Snuenergy_nc -> Fill(anatree->enu_truth[0]);
+  }
+  // We have a candidate track
+  else if(bestTrackID > -1) {
+
+    double trklen = SelectionTools::GetTrackLength(anatree,bestTrackID);
+
+    // Is CC and from neutrino
+    if(anatree->ccnc_truth[0] == 0 
+       && anatree->trkorigin_pandoraNu[bestTrackID][anatree->trkpidbestplane_pandoraNu[bestTrackID]] == 1) {
+      
+      if(!SelectionTools::InFV(anatree->nuvtxx_truth[0],
+			       anatree->nuvtxy_truth[0],
+			       anatree->nuvtxz_truth[0])
+	 && anatree->nuPDG_truth[0]==14){
+	cutplots.Snuenergy_outfv -> Fill(anatree->enu_truth[0]);
+        cutplots.Strklen_outfv -> Fill(trklen);
+      }
+      else if(anatree->nuPDG_truth[0]==14) {
+        cutplots.Snuenergy_numu   -> Fill(anatree->enu_truth[0]);
+        cutplots.Strklen_numu -> Fill(trklen);
+      }
+      else if(anatree->nuPDG_truth[0]==-14) {
+        cutplots.Snuenergy_anumu -> Fill(anatree->enu_truth[0]);
+        cutplots.Strklen_anumu -> Fill(trklen);
+      }
+      else if(anatree->nuPDG_truth[0]==12 || anatree->nuPDG_truth[0]==-12) {
+        cutplots.Snuenergy_nue -> Fill(anatree->enu_truth[0]);
+        cutplots.Strklen_nue -> Fill(trklen);
+      }
+    }
+    // Is NC and from neutrino
+    else if(anatree->ccnc_truth[0] == 1 
+            && anatree->trkorigin_pandoraNu[bestTrackID][anatree->trkpidbestplane_pandoraNu[bestTrackID]] == 1) {
+      cutplots.Snuenergy_nc -> Fill(anatree->enu_truth[0]);
+      cutplots.Strklen_nc -> Fill(trklen);
+    } 
+    // Is from cosmic
+    else if(anatree->trkorigin_pandoraNu[bestTrackID][anatree->trkpidbestplane_pandoraNu[bestTrackID]] != 1){
+      cutplots.Snuenergy_cosmics -> Fill(anatree->enu_truth[0]);
+      cutplots.Strklen_cosmics -> Fill(trklen);
+    }
+  }
+}
+
+//____________________________________________________________________________________________________
+THStack* MakeStackHisto(std::string name, std::string label, TLegend* leg, Spectrum *s1, Spectrum *s2, Spectrum *s3, Spectrum *s4, Spectrum *s5, Spectrum *s6) {
+
+    THStack *hs = new THStack(("hs_"+label).c_str(),(name).c_str());
+    TH1D* h1 = s1->ToTH1D();
+    h1->SetLineColor(kBlack);
+    h1->SetFillColor(kGray);
+    hs->Add(h1);
+    TH1D* h2 = s2->ToTH1D();
+    h2->SetLineColor(kBlack);
+    h2->SetFillColor(kOrange+3);
+    hs->Add(h2);
+    TH1D* h3 = s3 ->ToTH1D();
+    h3->SetLineColor(kBlack);
+    h3->SetFillColor(kGreen+2);
+    hs->Add(h3);
+    TH1D* h4 = s4 ->ToTH1D();
+    h4->SetLineColor(kBlack);
+    h4->SetFillColor(kOrange);
+    hs->Add(h4);
+    TH1D* h5 = s5 ->ToTH1D();
+    h5->SetLineColor(kBlack);
+    h5->SetFillColor(kBlue);
+    hs->Add(h5);
+    TH1D* h6 = s6 ->ToTH1D();
+    h6->SetLineColor(kBlack);
+    h6->SetFillColor(kRed+1);
+    hs->Add(h6);
+
+    leg->AddEntry(h6,"#nu_{#mu}","f");
+    leg->AddEntry(h3,"NC","f");
+    leg->AddEntry(h2,"#nu_{e}","f");
+    leg->AddEntry(h1,"#bar{#nu}_{#mu}","f");
+    leg->AddEntry(h4,"#nu_{#mu} CC Out of FV","f");
+    if(label != "flashtag" || label != "vertexcontained") leg->AddEntry(h5,"Cosmic bgr events","f");
+
+    return hs;
 
 }
+
 
 //____________________________________________________________________________________________________
 void SaveIntermidiatePlots(std::map<std::string,CutPlots> &cutToPlotsMap) {
@@ -107,41 +229,39 @@ void SaveIntermidiatePlots(std::map<std::string,CutPlots> &cutToPlotsMap) {
     std::cout << "Saving plot " << label << endl;
     CutPlots cutplots = it->second;
 
-    THStack *hs = new THStack(("hs_"+label).c_str(),(";True Neutrino Energy [GeV];Selected events up to " + label).c_str());
-    TH1D* h1 = cutplots.Snuenergy_anumu->ToTH1D();
-    h1->SetLineColor(kGray);
-    h1->SetFillColor(kGray);
-    hs->Add(h1);
-    TH1D* h2 = cutplots.Snuenergy_nue  ->ToTH1D();
-    h2->SetLineColor(kOrange+3);
-    h2->SetFillColor(kOrange+3);
-    hs->Add(h2);
-    TH1D* h3 = cutplots.Snuenergy_nc   ->ToTH1D();
-    h3->SetLineColor(kGreen+2);
-    h3->SetFillColor(kGreen+2);
-    hs->Add(h3);
-    TH1D* h4 = cutplots.Snuenergy_numu ->ToTH1D();
-    h4->SetLineColor(kRed+1);
-    h4->SetFillColor(kRed+1);
-    hs->Add(h4);
-
     TLegend *leg = new TLegend(0.1,0.7,0.48,0.9);
-    leg->AddEntry(h4,"#nu_{#mu}","f");
-    leg->AddEntry(h3,"NC","f");
-    leg->AddEntry(h2,"#nu_{e}","f");
-    leg->AddEntry(h1,"#bar{#nu}_{#mu}","f");
+    THStack *hs_nuenergy = MakeStackHisto(";True Neutrino Energy [GeV];Selected events up to " + label,"nuenergy_"+label,leg,
+                                                                                                    cutplots.Snuenergy_anumu,
+                                                                                                    cutplots.Snuenergy_nue,
+                                                                                                    cutplots.Snuenergy_nc,
+                                                                                                    cutplots.Snuenergy_outfv,
+                                                                                                    cutplots.Snuenergy_cosmics,
+                                                                                                    cutplots.Snuenergy_numu);
 
-    hs->Write();
+    THStack *hs_trklen = MakeStackHisto(";Track Length [GeV];Selected events up to " + label,"trklen_"+label,leg,
+                                                                                                    cutplots.Strklen_anumu,
+                                                                                                    cutplots.Strklen_nue,
+                                                                                                    cutplots.Strklen_nc,
+                                                                                                    cutplots.Strklen_outfv,
+                                                                                                    cutplots.Strklen_cosmics,
+                                                                                                    cutplots.Strklen_numu);
+
+    hs_nuenergy->Write();
+    hs_trklen->Write();
     leg->Write("legend");
 
-    cutplots.Snuenergy_numu ->Save();
-    cutplots.Snuenergy_anumu->Save();
-    cutplots.Snuenergy_nue  ->Save();
-    cutplots.Snuenergy_nc   ->Save();
+    cutplots.Snuenergy_numu      ->Save();
+    cutplots.Snuenergy_anumu     ->Save();
+    cutplots.Snuenergy_nue       ->Save();
+    cutplots.Snuenergy_nc        ->Save();
+    cutplots.Snuenergy_outfv     ->Save();
+    cutplots.Snuenergy_cosmics   ->Save();
+    
 
   }
   f->Close();
 }
+
 
 double CalcLength(const double& x_1, const double& y_1, const double& z_1, const double& x_2, const double& y_2, const double& z_2) {
     return sqrt(pow(x_1-x_2, 2) + pow(y_1-y_2, 2) + pow(z_1-z_2, 2));
@@ -301,19 +421,11 @@ int main(int argc, char* argv[]) {
     int theFlash = -1;
     if (selection->FlashTag(theFlash) == false) continue;
     EventsWithFlash++;
-    MakeIntermidiatePlots(cutToPlotsMap.find("flashtag")->second,anatree);
+    MakeIntermidiatePlots(cutToPlotsMap.find("flashtag")->second,anatree,-1);
  
     // Create vertex-track association
     std::map< int,std::vector<int> > VertexTrackCollection;
     selection->CreateVertexTrackAssociation(VertexTrackCollection);  
-
-/*
-    std::cout << "******************* Printing map, event " << i << std::endl;
-    for (std::map<int,std::vector<int>>::iterator it=VertexTrackCollection.begin(); it!=VertexTrackCollection.end(); ++it)
-      for (unsigned int hj = 0; hj < (it->second).size(); hj++)
-        std::cout << it->first << " => " << (it->second)[hj] << '\n';
-    std::cout << "******************* " << std::endl;
-*/
 
     // Select the most forward going vertex-track association
     int vertexCandidate = -1;
@@ -322,7 +434,7 @@ int main(int argc, char* argv[]) {
     // Check if vertex candidate is contained in FV
     if (!selection->InFV("vertex", vertexCandidate)) continue;
     EventsVtxInFV++;
-    MakeIntermidiatePlots(cutToPlotsMap.find("vertexcontained")->second,anatree);
+    MakeIntermidiatePlots(cutToPlotsMap.find("vertexcontained")->second,anatree,-1);
 
     // Get the longest track associated with the best vertex
     int trackCandidate;
@@ -333,19 +445,25 @@ int main(int argc, char* argv[]) {
     // Flash matching
     if (!selection->IsFlashMatched(trackCandidate, theFlash)) continue;
     EventsFlashMatched++;
-    MakeIntermidiatePlots(cutToPlotsMap.find("flashmatch")->second,anatree);
+    MakeIntermidiatePlots(cutToPlotsMap.find("flashmatch")->second,anatree,trackCandidate);
 
     // Track must be contained
     if (!selection->InFV("track", trackCandidate)) continue;
     EventsTracksInFV++;
-    MakeIntermidiatePlots(cutToPlotsMap.find("trackcontained")->second,anatree);
+    MakeIntermidiatePlots(cutToPlotsMap.find("trackcontained")->second,anatree,trackCandidate);
 
     // Minimum track length
     if (!selection->IsLongTrack(trackCandidate)) continue;
     EventsTrackLong++;
-    MakeIntermidiatePlots(cutToPlotsMap.find("longtrack")->second,anatree);
+    MakeIntermidiatePlots(cutToPlotsMap.find("longtrack")->second,anatree,trackCandidate);
 
-    Strk_range->Fill(CalcLength(anatree->trkstartx_pandoraNu[trackCandidate], anatree->trkstartx_pandoraNu[trackCandidate], anatree->trkstartx_pandoraNu[trackCandidate], anatree->trkendz_pandoraNu[trackCandidate], anatree->trkendz_pandoraNu[trackCandidate], anatree->trkendz_pandoraNu[trackCandidate]));
+    //if(anatree->ccnc_truth[0] == 0 || anatree->nuPDG_truth[0]==-14)
+    Strk_range->Fill(CalcLength(anatree->trkstartx_pandoraNu[trackCandidate], 
+                                anatree->trkstarty_pandoraNu[trackCandidate], 
+                                anatree->trkstartz_pandoraNu[trackCandidate], 
+                                anatree->trkendx_pandoraNu[trackCandidate], 
+                                anatree->trkendy_pandoraNu[trackCandidate], 
+                                anatree->trkendz_pandoraNu[trackCandidate]));
 
     selectedEvents++;
     newtree->Fill();

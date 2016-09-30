@@ -167,11 +167,35 @@ bool SelectionTools::InFV(std::string type, int vertexCandidate) {
 //____________________________________________________________________
 bool SelectionTools::InFV(double x, double y, double z) {
 
+  //This defines our current settings for the fiducial volume
+  double FVx = 256.35;
+  double FVy = 233;
+  double FVz = 1036.8;
+  double borderx = 10.;
+  double bordery = 20.;
+  double borderz = 10.;
+  double cryoradius = 191.61;
+  double cryoz = 1086.49 + 2*67.63;
+
   if(x < (FVx - borderx) && (x > borderx) && (y < (FVy/2. - bordery)) && (y > (-FVy/2. + bordery)) && (z < (FVz - borderz)) && (z > borderz)) return true;
   return false;
 
 }
 
+//____________________________________________________________________
+double SelectionTools::GetTrackLength(AnaNuMI *anatree, int trackIndex) {
+
+  double x_1, y_1, z_1, x_2, y_2, z_2;
+  x_1 = anatree->trkstartx_pandoraNu[trackIndex];
+  y_1 = anatree->trkstarty_pandoraNu[trackIndex];
+  z_1 = anatree->trkstartz_pandoraNu[trackIndex];
+  x_2 = anatree->trkendx_pandoraNu[trackIndex];  
+  y_2 = anatree->trkendy_pandoraNu[trackIndex];
+  z_2 = anatree->trkendz_pandoraNu[trackIndex];  
+
+  return sqrt(pow(x_1-x_2, 2) + pow(y_1-y_2, 2) + pow(z_1-z_2, 2));
+
+}
 
 //____________________________________________________________________
 int SelectionTools::GetBestTrack(int vertexCandidate, std::map< int,std::vector<int> > &VertexTrackCollection) {

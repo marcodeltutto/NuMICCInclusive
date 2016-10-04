@@ -62,7 +62,16 @@ void display(int entry = 0, string algo = "pandoraNu") {
   Float_t        trkendx_pandoraNu[32];
   Float_t        trkendy_pandoraNu[32];
   Float_t        trkendz_pandoraNu[32];
-  
+ 
+  Short_t         nvtx_pandoraNu;
+  Short_t         vtxId_pandoraNu[55];   //[nvtx_pandoraNu]
+  Float_t         vtxx_pandoraNu[55];   //[nvtx_pandoraNu]
+  Float_t         vtxy_pandoraNu[55];   //[nvtx_pandoraNu]
+  Float_t         vtxz_pandoraNu[55];   //[nvtx_pandoraNu]
+
+  Short_t        ntrkhits_pandoraNu[32][3];
+  Float_t        trkxyz_pandoraNu[32][3][2000][3];   //[ntracks_pandoraNu]
+ 
   Short_t        ntracks_pandoraCosmic;
   Float_t        trkstartx_pandoraCosmic[265];
   Float_t        trkstarty_pandoraCosmic[265];
@@ -71,6 +80,10 @@ void display(int entry = 0, string algo = "pandoraNu") {
   Float_t        trkendy_pandoraCosmic[265];
   Float_t        trkendz_pandoraCosmic[265];
 
+  Float_t        nuvtxx_truth[2];
+  Float_t        nuvtxy_truth[2];
+  Float_t        nuvtxz_truth[2];
+
   TBranch        *b_ntracks_pandoraNu;
   TBranch        *b_trkstartx_pandoraNu;
   TBranch        *b_trkstarty_pandoraNu;
@@ -78,7 +91,16 @@ void display(int entry = 0, string algo = "pandoraNu") {
   TBranch        *b_trkendx_pandoraNu;
   TBranch        *b_trkendy_pandoraNu;
   TBranch        *b_trkendz_pandoraNu;
-  
+ 
+  TBranch        *b_nvtx_pandoraNu;   //!
+  TBranch        *b_vtxId_pandoraNu;   //!
+  TBranch        *b_vtxx_pandoraNu;   //!
+  TBranch        *b_vtxy_pandoraNu;   //!
+  TBranch        *b_vtxz_pandoraNu;   //!
+
+  TBranch        *b_ntrkhits_pandoraNu;
+  TBranch        *b_trkxyz_pandoraNu;   //!
+
   TBranch        *b_ntracks_pandoraCosmic;
   TBranch        *b_trkstartx_pandoraCosmic;
   TBranch        *b_trkstarty_pandoraCosmic;
@@ -86,6 +108,11 @@ void display(int entry = 0, string algo = "pandoraNu") {
   TBranch        *b_trkendx_pandoraCosmic;
   TBranch        *b_trkendy_pandoraCosmic;
   TBranch        *b_trkendz_pandoraCosmic;
+
+  TBranch        *b_nuvtxx_truth;
+  TBranch        *b_nuvtxy_truth;
+  TBranch        *b_nuvtxz_truth;
+
 
   fChain->SetBranchAddress("ntracks_pandoraNu",   &ntracks_pandoraNu,  &b_ntracks_pandoraNu);
   fChain->SetBranchAddress("trkstartx_pandoraNu", trkstartx_pandoraNu, &b_trkstartx_pandoraNu);
@@ -95,6 +122,15 @@ void display(int entry = 0, string algo = "pandoraNu") {
   fChain->SetBranchAddress("trkendy_pandoraNu", trkendy_pandoraNu, &b_trkendy_pandoraNu);
   fChain->SetBranchAddress("trkendz_pandoraNu", trkendz_pandoraNu, &b_trkendz_pandoraNu);
 
+  fChain->SetBranchAddress("nvtx_pandoraNu", &nvtx_pandoraNu, &b_nvtx_pandoraNu);
+  fChain->SetBranchAddress("vtxId_pandoraNu", vtxId_pandoraNu, &b_vtxId_pandoraNu);
+  fChain->SetBranchAddress("vtxx_pandoraNu", vtxx_pandoraNu, &b_vtxx_pandoraNu);
+  fChain->SetBranchAddress("vtxy_pandoraNu", vtxy_pandoraNu, &b_vtxy_pandoraNu);
+  fChain->SetBranchAddress("vtxz_pandoraNu", vtxz_pandoraNu, &b_vtxz_pandoraNu);
+
+  fChain->SetBranchAddress("ntrkhits_pandoraNu", ntrkhits_pandoraNu, &b_ntrkhits_pandoraNu);
+  fChain->SetBranchAddress("trkxyz_pandoraNu", trkxyz_pandoraNu, &b_trkxyz_pandoraNu);
+
   fChain->SetBranchAddress("ntracks_pandoraCosmic",   &ntracks_pandoraCosmic,  &b_ntracks_pandoraCosmic);
   fChain->SetBranchAddress("trkstartx_pandoraCosmic", trkstartx_pandoraCosmic, &b_trkstartx_pandoraCosmic);
   fChain->SetBranchAddress("trkstarty_pandoraCosmic", trkstarty_pandoraCosmic, &b_trkstarty_pandoraCosmic);
@@ -103,24 +139,41 @@ void display(int entry = 0, string algo = "pandoraNu") {
   fChain->SetBranchAddress("trkendy_pandoraCosmic", trkendy_pandoraCosmic, &b_trkendy_pandoraCosmic);
   fChain->SetBranchAddress("trkendz_pandoraCosmic", trkendz_pandoraCosmic, &b_trkendz_pandoraCosmic);
 
-  
+  fChain->SetBranchAddress("nuvtxx_truth", nuvtxx_truth, &b_nuvtxx_truth);
+  fChain->SetBranchAddress("nuvtxy_truth", nuvtxy_truth, &b_nuvtxy_truth);
+  fChain->SetBranchAddress("nuvtxz_truth", nuvtxz_truth, &b_nuvtxz_truth);
+
   fChain->GetEntry(entry);
   
   TPolyLine3D * track_Nu[100];
   TPolyLine3D * track_Cosmic[100];
+  TPolyMarker3D *vertex_Nu[100];;
 
-  if(algo == "pandoraNu"){
+  if(algo == "pandoraNu" || algo == "pandoraNuCosmic"){
     for (int t = 0; t < ntracks_pandoraNu; t++){
       track_Nu[t] = new TPolyLine3D(2);
       track_Nu[t]->SetPoint(0,trkstartx_pandoraNu[t], trkstartz_pandoraNu[t], trkstarty_pandoraNu[t]);
       track_Nu[t]->SetPoint(1,trkendx_pandoraNu[t],   trkendz_pandoraNu[t],   trkendy_pandoraNu[t]);
       track_Nu[t]->SetLineColor(kRed);
-      track_Nu[t]->Draw();
-    
+      if(ntrkhits_pandoraNu[t][2] > 0) track_Nu[t]->Draw();
+      cout << "Track "<< t<<endl;
+      cout << "Number of hits on U plane " << ntrkhits_pandoraNu[t][0]<<endl;
+      cout << "               on V plane " << ntrkhits_pandoraNu[t][1]<<endl;
+      cout << "               on W plane " << ntrkhits_pandoraNu[t][2]<<endl;
+//trkxyz_pandoraNu[][][][]
+
+    }
+    for (int v = 0; v < nvtx_pandoraNu; v ++){
+      vertex_Nu[v] = new TPolyMarker3D(1);
+      vertex_Nu[v]->SetPoint(0,vtxx_pandoraNu[v],vtxz_pandoraNu[v],vtxy_pandoraNu[v]);
+      vertex_Nu[v]->SetMarkerSize(2);
+      vertex_Nu[v]->SetMarkerColor(4);
+      vertex_Nu[v]->SetMarkerStyle(2);
+      vertex_Nu[v]->Draw();
     }
   }
  
-  if(algo == "pandoraCosmic"){
+  if(algo == "pandoraCosmic" || algo == "pandoraNuCosmic"){
     for (int t = 0; t < ntracks_pandoraCosmic; t++){
       track_Cosmic[t] = new TPolyLine3D(2);
       track_Cosmic[t]->SetPoint(0,trkstartx_pandoraCosmic[t], trkstartz_pandoraCosmic[t], trkstarty_pandoraCosmic[t]);
@@ -130,6 +183,15 @@ void display(int entry = 0, string algo = "pandoraNu") {
     
     }
   }
+
+  // Plot truth nu vertex
+  TPolyMarker3D *vertex_truth = new TPolyMarker3D[1];
+  vertex_truth->SetPoint(0,nuvtxx_truth[0],nuvtxz_truth[0],nuvtxy_truth[0]);
+  vertex_truth->SetMarkerSize(2);
+  vertex_truth->SetMarkerColor(3);
+  vertex_truth->SetMarkerStyle(20);
+  vertex_truth->Draw();
+
 
   
   std::cout << "start x " << trkstartx_pandoraCosmic[0] << std::endl;

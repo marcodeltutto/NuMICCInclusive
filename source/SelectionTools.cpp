@@ -154,6 +154,23 @@ bool SelectionTools::InFV(std::string type, int vertexCandidate) {
     return false;
 
   }
+  else if (type == "trackCosmic") {
+    x = fanatree->trkstartx_pandoraCosmic[vertexCandidate];
+    y = fanatree->trkstarty_pandoraCosmic[vertexCandidate];
+    z = fanatree->trkstartz_pandoraCosmic[vertexCandidate];
+
+    bool start = this->InFV(x,y,z);
+
+    x = fanatree->trkendx_pandoraCosmic[vertexCandidate];
+    y = fanatree->trkendy_pandoraCosmic[vertexCandidate];
+    z = fanatree->trkendz_pandoraCosmic[vertexCandidate];
+
+    bool end = this->InFV(x,y,z);
+
+    if (start && end) return true;
+    return false;
+
+  }
   else {
     std::cout << "SelectionTools::InFV   Wrong argument." << std::endl;
     exit(0);
@@ -255,7 +272,42 @@ bool SelectionTools::IsLongTrack(int TrackID) {
 }
 
 
+//____________________________________________________________________
+int SelectionTools::GetEquivalentTrackWithPandoraCosmic(int TrackID) {
 
+  double thrX = 2.;
+  double thrY = 2.;
+  double thrZ = 2.;
+
+
+  int startx_nu = fanatree->trkstartx_pandoraNu[TrackID];
+  int starty_nu = fanatree->trkstarty_pandoraNu[TrackID];
+  int startz_nu = fanatree->trkstartz_pandoraNu[TrackID];
+  int endx_nu = fanatree->trkendx_pandoraNu[TrackID];
+  int endy_nu = fanatree->trkendy_pandoraNu[TrackID];
+  int endz_nu = fanatree->trkendz_pandoraNu[TrackID];
+
+
+  for (int t = 0; t < fanatree->ntracks_pandoraCosmic; t++) {
+    int startx_cos = fanatree->trkstartx_pandoraCosmic[t];
+    int starty_cos = fanatree->trkstarty_pandoraCosmic[t];
+    int startz_cos = fanatree->trkstartz_pandoraCosmic[t];
+    int endx_cos = fanatree->trkendx_pandoraCosmic[t];
+    int endy_cos = fanatree->trkendy_pandoraCosmic[t];
+    int endz_cos = fanatree->trkendz_pandoraCosmic[t];
+
+    if (  ( abs(startx_cos-startx_nu) < thrX   &&   abs(starty_cos-starty_nu) < thrY   &&   abs(startz_cos-startz_nu) < thrZ )  ||
+          ( abs(endx_cos-endx_nu)     < thrX   &&   abs(endy_cos-endy_nu)     < thrY   &&   abs(endz_cos-endz_nu)     < thrZ )  ||
+          ( abs(endx_cos-startx_nu)   < thrX   &&   abs(endy_cos-starty_nu)   < thrY   &&   abs(endz_cos-startz_nu)   < thrZ )  ||
+          ( abs(startx_cos-endx_nu)   < thrX   &&   abs(starty_cos-endy_nu)   < thrY   &&   abs(startz_cos-endz_nu)   < thrZ )    ) {
+
+      return t; 
+    } 
+  }
+
+  return -1;
+
+}
 
 
 

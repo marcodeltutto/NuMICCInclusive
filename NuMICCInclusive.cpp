@@ -16,11 +16,21 @@
 #include "AnaNuMI.h"
 #include "Spectrum.hpp"
 #include "Spectrum2D.hpp"
+#include "PlotHandler.hpp"
 
 using namespace std;
 
+bool isCosmic = false;
+bool isSignal = false;
+bool trackCandidatePandoraCosmicNotContained = false;
+int cosmicBkg=0;
+int signal=0;
+int cosmicBkgAndNoCosmicTrack=0;
+int signalAndNoCosmicTrack=0;
+int cosmicBkgAndCosmicTrackNotContained=0;
+
 //____________________________________________________________________________________________________
-struct CutPlots {
+/*struct CutPlots {
 
   Spectrum* Snuenergy_numu;
   Spectrum* Snuenergy_anumu;
@@ -35,7 +45,14 @@ struct CutPlots {
   Spectrum* Strklen_nc;
   Spectrum* Strklen_cosmics;
   Spectrum* Strklen_outfv;
-};
+
+  Spectrum* Scostheta_numu;
+  Spectrum* Scostheta_anumu;
+  Spectrum* Scostheta_nue;
+  Spectrum* Scostheta_nc;
+  Spectrum* Scostheta_cosmics;
+  Spectrum* Scostheta_outfv;
+};*/
 
 //____________________________________________________________________________________________________
 void ActivateBranches(AnaNuMI *anatree) {
@@ -69,24 +86,33 @@ void ActivateBranches(AnaNuMI *anatree) {
   anatree->fChain->SetBranchStatus("trkstarty_pandoraNu",1);
   anatree->fChain->SetBranchStatus("trkstartz_pandoraNu",1);
   anatree->fChain->SetBranchStatus("trktheta_pandoraNu",1);
+  anatree->fChain->SetBranchStatus("trkendx_pandoraCosmic",1);
+  anatree->fChain->SetBranchStatus("trkendy_pandoraCosmic",1);
+  anatree->fChain->SetBranchStatus("trkendz_pandoraCosmic",1);
+  anatree->fChain->SetBranchStatus("trkstartx_pandoraCosmic",1);
+  anatree->fChain->SetBranchStatus("trkstarty_pandoraCosmic",1);
+  anatree->fChain->SetBranchStatus("trkstartz_pandoraCosmic",1);
   anatree->fChain->SetBranchStatus("trkpidbestplane_pandoraNu",1);
   anatree->fChain->SetBranchStatus("trkorigin_pandoraNu",1);
   anatree->fChain->SetBranchStatus("vx_flux",1);
   anatree->fChain->SetBranchStatus("vy_flux",1);
   anatree->fChain->SetBranchStatus("vz_flux",1);
+  anatree->fChain->SetBranchStatus("ntrkhits_pandoraNu",1);
+  anatree->fChain->SetBranchStatus("trktheta_pandoraNu",1);
   //anatree->fChain->SetBranchStatus("",1);
 }
-
+/*
 //____________________________________________________________________________________________________
 void InstantiateIntermidiatePlots(std::map<std::string,CutPlots> &cutToPlotsMap, double totalPOT) {
 
   std::vector<std::string> cutname;
-  cutname.resize(5);
+  cutname.resize(6);
   cutname.at(0) = "flashtag";
   cutname.at(1) = "vertexcontained";
-  cutname.at(2) = "flashmatch";
-  cutname.at(3) = "trackcontained";
-  cutname.at(4) = "longtrack";
+  cutname.at(2) = "selectbesttrack";
+  cutname.at(3) = "flashmatch";
+  cutname.at(4) = "trackcontained";
+  cutname.at(5) = "longtrack";
 
   for (unsigned int i = 0; i < cutname.size(); i++) {
     CutPlots cutplots;
@@ -102,8 +128,15 @@ void InstantiateIntermidiatePlots(std::map<std::string,CutPlots> &cutToPlotsMap,
     cutplots.Strklen_anumu     = new Spectrum("trklen_anumu_"+cutname.at(i), "#bar{#nu}_{#mu};Track Length [cm];Selected Events up to "+cutname.at(i),20,0,1036.8,totalPOT);
     cutplots.Strklen_nue       = new Spectrum("trklen_nue_"+cutname.at(i),   "#nu_{e};Track Length [cm];Selected Events up to "+cutname.at(i),20,0,1036.8,totalPOT);
     cutplots.Strklen_nc        = new Spectrum("trklen_nc_"+cutname.at(i),    "NC;Track Length [cm];Selected Events up to "+cutname.at(i),20,0,1036.8,totalPOT);
-    cutplots.Strklen_cosmics   = new Spectrum("trklen_cosmics_"+cutname.at(i),"Cosmics;Neutrino Energy [GeV];Selected Events up to "+cutname.at(i),20,0,1036.8,totalPOT);
-    cutplots.Strklen_outfv     = new Spectrum("trklen_outfv_"+cutname.at(i),"Outside FV;Neutrino Energy [GeV];Selected Events up to "+cutname.at(i),20,0,1036.8,totalPOT);
+    cutplots.Strklen_cosmics   = new Spectrum("trklen_cosmics_"+cutname.at(i),"Cosmics;Track Length [cm];Selected Events up to "+cutname.at(i),20,0,1036.8,totalPOT);
+    cutplots.Strklen_outfv     = new Spectrum("trklen_outfv_"+cutname.at(i),"Outside FV;Track Length [cm];Selected Events up to "+cutname.at(i),20,0,1036.8,totalPOT);
+
+    cutplots.Scostheta_numu      = new Spectrum("costheta_numu_"+cutname.at(i),  "#nu_{#mu};cos#theta;Selected Events up to "+cutname.at(i),20,-1,1,totalPOT);
+    cutplots.Scostheta_anumu     = new Spectrum("costheta_anumu_"+cutname.at(i), "#bar{#nu}_{#mu};cos#theta;Selected Events up to "+cutname.at(i),20,-1,1,totalPOT);
+    cutplots.Scostheta_nue       = new Spectrum("costheta_nue_"+cutname.at(i),   "#nu_{e};cos#theta;Selected Events up to "+cutname.at(i),20,-1,1,totalPOT);
+    cutplots.Scostheta_nc        = new Spectrum("costheta_nc_"+cutname.at(i),    "NC;cos#theta;Selected Events up to "+cutname.at(i),20,-1,1,totalPOT);
+    cutplots.Scostheta_cosmics   = new Spectrum("costheta_cosmics_"+cutname.at(i),"Cosmics;cos#theta;Selected Events up to "+cutname.at(i),20,-1,1,totalPOT);
+    cutplots.Scostheta_outfv     = new Spectrum("costheta_outfv_"+cutname.at(i),"Outside FV;cos#theta;Selected Events up to "+cutname.at(i),20,-1,1,totalPOT);
 
     cutToPlotsMap.emplace(cutname[i],cutplots);
 
@@ -116,7 +149,9 @@ void InstantiateIntermidiatePlots(std::map<std::string,CutPlots> &cutToPlotsMap,
 //____________________________________________________________________________________________________
 void MakeIntermidiatePlots(CutPlots cutplots, AnaNuMI * anatree, int bestTrackID){
 
+  // *******************************
   // We don't have a candidate track
+  // *******************************
   if(bestTrackID == -1) {
     if(anatree->ccnc_truth[0] == 0) {
       
@@ -134,10 +169,13 @@ void MakeIntermidiatePlots(CutPlots cutplots, AnaNuMI * anatree, int bestTrackID
     } // end if cc
     else if(anatree->ccnc_truth[0] == 1) cutplots.Snuenergy_nc -> Fill(anatree->enu_truth[0]);
   }
+  // *******************************
   // We have a candidate track
+  // *******************************
   else if(bestTrackID > -1) {
 
     double trklen = SelectionTools::GetTrackLength(anatree,bestTrackID);
+    double cosTheta = anatree->trktheta_pandoraNu[bestTrackID];
 
     // Is CC and from neutrino
     if(anatree->ccnc_truth[0] == 0 
@@ -149,18 +187,24 @@ void MakeIntermidiatePlots(CutPlots cutplots, AnaNuMI * anatree, int bestTrackID
 	 && anatree->nuPDG_truth[0]==14){
 	cutplots.Snuenergy_outfv -> Fill(anatree->enu_truth[0]);
         cutplots.Strklen_outfv -> Fill(trklen);
+        cutplots.Scostheta_outfv -> Fill(cosTheta);
       }
       else if(anatree->nuPDG_truth[0]==14) {
         cutplots.Snuenergy_numu   -> Fill(anatree->enu_truth[0]);
         cutplots.Strklen_numu -> Fill(trklen);
+        cutplots.Scostheta_numu -> Fill(cosTheta);
+        //cout << "Is signal." << endl;
+        isSignal = true;
       }
       else if(anatree->nuPDG_truth[0]==-14) {
         cutplots.Snuenergy_anumu -> Fill(anatree->enu_truth[0]);
         cutplots.Strklen_anumu -> Fill(trklen);
+        cutplots.Scostheta_anumu -> Fill(cosTheta);
       }
       else if(anatree->nuPDG_truth[0]==12 || anatree->nuPDG_truth[0]==-12) {
         cutplots.Snuenergy_nue -> Fill(anatree->enu_truth[0]);
         cutplots.Strklen_nue -> Fill(trklen);
+        cutplots.Scostheta_nue -> Fill(cosTheta);
       }
     }
     // Is NC and from neutrino
@@ -168,11 +212,15 @@ void MakeIntermidiatePlots(CutPlots cutplots, AnaNuMI * anatree, int bestTrackID
             && anatree->trkorigin_pandoraNu[bestTrackID][anatree->trkpidbestplane_pandoraNu[bestTrackID]] == 1) {
       cutplots.Snuenergy_nc -> Fill(anatree->enu_truth[0]);
       cutplots.Strklen_nc -> Fill(trklen);
+      cutplots.Scostheta_nc -> Fill(cosTheta);
     } 
     // Is from cosmic
     else if(anatree->trkorigin_pandoraNu[bestTrackID][anatree->trkpidbestplane_pandoraNu[bestTrackID]] != 1){
       cutplots.Snuenergy_cosmics -> Fill(anatree->enu_truth[0]);
       cutplots.Strklen_cosmics -> Fill(trklen);
+      cutplots.Scostheta_cosmics -> Fill(cosTheta);
+      //cout << "Is cosmic. trkorigin is " << anatree->trkorigin_pandoraNu[bestTrackID][anatree->trkpidbestplane_pandoraNu[bestTrackID]] << endl;
+      isCosmic = true;
     }
   }
 }
@@ -211,6 +259,14 @@ THStack* MakeStackHisto(std::string name, std::string label, TLegend* leg, Spect
     leg->AddEntry(h2,"#nu_{e}","f");
     leg->AddEntry(h1,"#bar{#nu}_{#mu}","f");
     leg->AddEntry(h4,"#nu_{#mu} CC Out of FV","f");
+
+    leg->SetBorderSize(1);
+    leg->SetLineColor(0);
+    leg->SetLineStyle(1);
+    leg->SetLineWidth(1);
+    leg->SetFillColor(0);
+    leg->SetFillStyle(1001);
+
     if(label != "flashtag" || label != "vertexcontained") leg->AddEntry(h5,"Cosmic bgr events","f");
 
     return hs;
@@ -229,7 +285,7 @@ void SaveIntermidiatePlots(std::map<std::string,CutPlots> &cutToPlotsMap) {
     std::cout << "Saving plot " << label << endl;
     CutPlots cutplots = it->second;
 
-    TLegend *leg = new TLegend(0.1,0.7,0.48,0.9);
+    TLegend *leg = new TLegend(0.5716332,0.5242105,0.8567335,0.8484211,NULL,"brNDC");
     THStack *hs_nuenergy = MakeStackHisto(";True Neutrino Energy [GeV];Selected events up to " + label,"nuenergy_"+label,leg,
                                                                                                     cutplots.Snuenergy_anumu,
                                                                                                     cutplots.Snuenergy_nue,
@@ -237,8 +293,8 @@ void SaveIntermidiatePlots(std::map<std::string,CutPlots> &cutToPlotsMap) {
                                                                                                     cutplots.Snuenergy_outfv,
                                                                                                     cutplots.Snuenergy_cosmics,
                                                                                                     cutplots.Snuenergy_numu);
-
-    THStack *hs_trklen = MakeStackHisto(";Track Length [GeV];Selected events up to " + label,"trklen_"+label,leg,
+    TLegend *leg2 = new TLegend(0.5716332,0.5242105,0.8567335,0.8484211,NULL,"brNDC");
+    THStack *hs_trklen = MakeStackHisto(";Track Length [cm];Selected events up to " + label,"trklen_"+label,leg2,
                                                                                                     cutplots.Strklen_anumu,
                                                                                                     cutplots.Strklen_nue,
                                                                                                     cutplots.Strklen_nc,
@@ -246,8 +302,18 @@ void SaveIntermidiatePlots(std::map<std::string,CutPlots> &cutToPlotsMap) {
                                                                                                     cutplots.Strklen_cosmics,
                                                                                                     cutplots.Strklen_numu);
 
+    TLegend *leg3 = new TLegend(0.5716332,0.5242105,0.8567335,0.8484211,NULL,"brNDC");
+    THStack *hs_costheta = MakeStackHisto(";cos#theta;Selected events up to " + label,"trklen_"+label,leg2,
+                                                                                                    cutplots.Scostheta_anumu,
+                                                                                                    cutplots.Scostheta_nue,
+                                                                                                    cutplots.Scostheta_nc,
+                                                                                                    cutplots.Scostheta_outfv,
+                                                                                                    cutplots.Scostheta_cosmics,
+                                                                                                    cutplots.Scostheta_numu);
+
     hs_nuenergy->Write();
     hs_trklen->Write();
+    hs_costheta->Write();
     leg->Write("legend");
 
     cutplots.Snuenergy_numu      ->Save();
@@ -262,7 +328,7 @@ void SaveIntermidiatePlots(std::map<std::string,CutPlots> &cutToPlotsMap) {
   f->Close();
 }
 
-
+*/
 double CalcLength(const double& x_1, const double& y_1, const double& z_1, const double& x_2, const double& y_2, const double& z_2) {
     return sqrt(pow(x_1-x_2, 2) + pow(y_1-y_2, 2) + pow(z_1-z_2, 2));
 }
@@ -346,6 +412,7 @@ int main(int argc, char* argv[]) {
   int selectedEvents = 0.;
   int counter = 0.;  
   int EventsWithFlash = 0, EventsVtxInFV = 0, EventsFlashMatched = 0, EventsTracksInFV = 0, EventsTrackLong = 0;
+  int noHitsOnUplane = 0, noHitsOnVplane = 0, noHitsOnWplane = 0;
 
   Spectrum* Sflashtime      = new Spectrum("flash_time",      ";Flash Time [#mus];Entries per bin",       300000, -3000, 3000, totalPOT);
   Spectrum* Sflashtime50pe  = new Spectrum("flash_time_50",   ";Flash Time [#mus];Entries per bin",       300000, -3000, 3000, totalPOT);    
@@ -364,8 +431,9 @@ int main(int argc, char* argv[]) {
   Spectrum* Strk_range = new Spectrum("trk_range", ";Track Range [cm]; Selected Events",20,0,1000, totalPOT);
 
   // This is a map: cutname <-> spectrum array
-  std::map<std::string,CutPlots> cutToPlotsMap;
-  InstantiateIntermidiatePlots(cutToPlotsMap,totalPOT);
+  //std::map<std::string,CutPlots> cutToPlotsMap;
+  PlotHandler ph;
+  ph.InstantiateIntermidiatePlots(totalPOT);
 
   if(maxEntries > 0.) evts = maxEntries;
 
@@ -375,6 +443,8 @@ int main(int argc, char* argv[]) {
 
     cflux->GetEntry(i);
     SelectionTools * selection = new SelectionTools(anatree);
+
+    //cout << "***** Event " << i << endl;
 
     // ************************
     //
@@ -417,12 +487,15 @@ int main(int argc, char* argv[]) {
     //
     // ************************
 
+    isCosmic = isSignal = trackCandidatePandoraCosmicNotContained = false;
+
     // Flash tag
     int theFlash = -1;
     if (selection->FlashTag(theFlash) == false) continue;
     EventsWithFlash++;
-    MakeIntermidiatePlots(cutToPlotsMap.find("flashtag")->second,anatree,-1);
- 
+    std::string cutname = "flashtag";
+    ph.MakeIntermidiatePlots(cutname,anatree,-1);
+
     // Create vertex-track association
     std::map< int,std::vector<int> > VertexTrackCollection;
     selection->CreateVertexTrackAssociation(VertexTrackCollection);  
@@ -431,33 +504,61 @@ int main(int argc, char* argv[]) {
     int vertexCandidate = -1;
     selection->SelectVertexTrackForward(VertexTrackCollection, vertexCandidate);
 
+    //cout << "                                        Number of vertices: " << anatree->nvtx_pandoraNu << endl;
+
     // Check if vertex candidate is contained in FV
     if (!selection->InFV("vertex", vertexCandidate)) continue;
     EventsVtxInFV++;
-    MakeIntermidiatePlots(cutToPlotsMap.find("vertexcontained")->second,anatree,-1);
+    ph.MakeIntermidiatePlots("vertexcontained",anatree,-1);
 
     // Get the longest track associated with the best vertex
     int trackCandidate;
     trackCandidate = selection->GetBestTrack(vertexCandidate, VertexTrackCollection);
 
     if (trackCandidate == -1) continue;
+    ph.MakeIntermidiatePlots("selectbesttrack",anatree,trackCandidate);
+    //cout << "Best vertex is " << vertexCandidate << "   Best track is " << trackCandidate << endl;
 
     // Flash matching
     if (!selection->IsFlashMatched(trackCandidate, theFlash)) continue;
     EventsFlashMatched++;
-    MakeIntermidiatePlots(cutToPlotsMap.find("flashmatch")->second,anatree,trackCandidate);
+    ph.MakeIntermidiatePlots("flashmatch",anatree,trackCandidate);
 
     // Track must be contained
     if (!selection->InFV("track", trackCandidate)) continue;
     EventsTracksInFV++;
-    MakeIntermidiatePlots(cutToPlotsMap.find("trackcontained")->second,anatree,trackCandidate);
+    ph.MakeIntermidiatePlots("trackcontained",anatree,trackCandidate);
+
+    // Check with pandoraCosmic
+    int trackCandidatePandoraCosmic = selection->GetEquivalentTrackWithPandoraCosmic(trackCandidate);
+    //cout << "{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}   trackCandidatePandoraCosmic is " << trackCandidatePandoraCosmic << endl;
+    //if (selection->InFV("trackCosmic", trackCandidatePandoraCosmic)) cout << "Is contained!" << endl;
+    if(trackCandidatePandoraCosmic > -1 && !selection->InFV("trackCosmic", trackCandidatePandoraCosmic)) trackCandidatePandoraCosmicNotContained=true; 
 
     // Minimum track length
     if (!selection->IsLongTrack(trackCandidate)) continue;
     EventsTrackLong++;
-    MakeIntermidiatePlots(cutToPlotsMap.find("longtrack")->second,anatree,trackCandidate);
+    std::string status = ph.MakeIntermidiatePlots("longtrack",anatree,trackCandidate);
+    //cout << ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>Is selected." << endl;
 
-    //if(anatree->ccnc_truth[0] == 0 || anatree->nuPDG_truth[0]==-14)
+    if (status == "isSignal") isSignal = true;
+    if (status == "isCosmic") isCosmic = true;
+
+    if (isCosmic) cosmicBkg++;
+    if (isCosmic && trackCandidatePandoraCosmic == -1) cosmicBkgAndNoCosmicTrack++;
+    if (isCosmic && trackCandidatePandoraCosmicNotContained) cosmicBkgAndCosmicTrackNotContained++;
+    if (isSignal) signal++;
+    if (isSignal && trackCandidatePandoraCosmic == -1) signalAndNoCosmicTrack++;
+
+    // For this selected track, verify if I have hits on all planes.
+    if (anatree->ntrkhits_pandoraNu[trackCandidate][0] < 0) noHitsOnUplane++;
+    if (anatree->ntrkhits_pandoraNu[trackCandidate][1] < 0) noHitsOnVplane++;
+    if (anatree->ntrkhits_pandoraNu[trackCandidate][2] < 0) noHitsOnWplane++;
+    /*  cout << "Track "<< trackCandidate<<endl;
+      cout << "Number of hits on U plane " << anatree->ntrkhits_pandoraNu[trackCandidate][0]<<endl;
+      cout << "               on V plane " << anatree->ntrkhits_pandoraNu[trackCandidate][1]<<endl;
+      cout << "               on W plane " << anatree->ntrkhits_pandoraNu[trackCandidate][2]<<endl;
+*/
     Strk_range->Fill(CalcLength(anatree->trkstartx_pandoraNu[trackCandidate], 
                                 anatree->trkstarty_pandoraNu[trackCandidate], 
                                 anatree->trkstartz_pandoraNu[trackCandidate], 
@@ -485,7 +586,7 @@ int main(int argc, char* argv[]) {
  
   Strk_range ->Save();
 
-  SaveIntermidiatePlots(cutToPlotsMap);
+  ph.SaveIntermidiatePlots();
 
   newtree->AutoSave();
   delete oldfile;
@@ -502,8 +603,15 @@ int main(int argc, char* argv[]) {
   std::cout << "number of events with contained tracks : " << EventsTracksInFV << std::endl;
   std::cout << "number of events with longest track > 75cm : " << EventsTrackLong << std::endl;
 
+  std::cout <<"noHitsOnUplane = " << noHitsOnUplane << endl;
+  std::cout <<"noHitsOnVplane = " << noHitsOnVplane << endl;
+  std::cout <<"noHitsOnWplane = " << noHitsOnWplane << endl << endl << endl;
 
-
+  std::cout <<"cosmicBkg                 = " << cosmicBkg << endl;
+  std::cout <<"cosmicBkgAndNoCosmicTrack = " << cosmicBkgAndNoCosmicTrack << endl;
+  std::cout <<"signal                    = " << signal << endl;
+  std::cout <<"signalAndNoCosmicTrack    = " << signalAndNoCosmicTrack << endl;
+  std::cout <<"cosmicBkgAndCosmicTrackNotContained = " << cosmicBkgAndCosmicTrackNotContained << endl;
 
   clock_t end = clock();
   double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;

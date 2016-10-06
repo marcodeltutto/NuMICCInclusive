@@ -27,6 +27,7 @@ class SelectionTools {
   int GetBestTrack(int vertexCandidate, std::map< int,std::vector<int> > &VertexTrackCollection); 
   bool IsFlashMatched(int trackCandidate, int theFlash);
   bool IsLongTrack(int trackCandidate);
+  int GetEquivalentTrackWithPandoraCosmic(int TrackID);
 
   // Cut variables
   double flashwidth = 80; //cm. Distance flash-track

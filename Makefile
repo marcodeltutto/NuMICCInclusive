@@ -1,5 +1,5 @@
 SRC_PATH=source
-FILES=source/SelectionTools.cpp source/Spectrum.cpp source/Spectrum2D.cpp source/AnaNuMI.C
+FILES=source/SelectionTools.cpp source/Spectrum.cpp source/Spectrum2D.cpp source/AnaNuMI.C source/PlotHandler.cpp
 SOURCES = $(FILES:%.cpp=$(SRC_PATH)/%.cpp)
 
 CFLAGS=-Wall

@@ -15,7 +15,7 @@ Compile with `make`.
 Execute with `./NuMICCInclusive bnb pot -1`.
 
 ## Submit job to a pbs cluster
-Open runjobs.sh and change the output and log path, then:
+Open `pbs_cluster/runjobs.sh` and change the output and log path, then:
 ```
 cd pbs_cluster
 source runjobs.sh

@@ -147,7 +147,7 @@ void display(int entry = 0, string algo = "pandoraNu") {
   
   TPolyLine3D * track_Nu[100];
   TPolyLine3D * track_Cosmic[100];
-  TPolyMarker3D *vertex_Nu[100];;
+  TPolyMarker3D *vertex_Nu[100];
 
   if(algo == "pandoraNu" || algo == "pandoraNuCosmic"){
     for (int t = 0; t < ntracks_pandoraNu; t++){
@@ -155,7 +155,7 @@ void display(int entry = 0, string algo = "pandoraNu") {
       track_Nu[t]->SetPoint(0,trkstartx_pandoraNu[t], trkstartz_pandoraNu[t], trkstarty_pandoraNu[t]);
       track_Nu[t]->SetPoint(1,trkendx_pandoraNu[t],   trkendz_pandoraNu[t],   trkendy_pandoraNu[t]);
       track_Nu[t]->SetLineColor(kRed);
-      if(ntrkhits_pandoraNu[t][2] > 0) track_Nu[t]->Draw();
+      /*if(ntrkhits_pandoraNu[t][2] > 0)*/ track_Nu[t]->Draw();
       cout << "Track "<< t<<endl;
       cout << "Number of hits on U plane " << ntrkhits_pandoraNu[t][0]<<endl;
       cout << "               on V plane " << ntrkhits_pandoraNu[t][1]<<endl;
@@ -194,13 +194,15 @@ void display(int entry = 0, string algo = "pandoraNu") {
 
 
   
-  std::cout << "start x " << trkstartx_pandoraCosmic[0] << std::endl;
-  std::cout << "start y " << trkstarty_pandoraCosmic[0] << std::endl;
-  std::cout << "start z " << trkstartz_pandoraCosmic[0] << std::endl;
-  std::cout << "end x " << trkendx_pandoraCosmic[0] << std::endl;
-  std::cout << "end y " << trkendy_pandoraCosmic[0] << std::endl;
-  std::cout << "end z " << trkendz_pandoraCosmic[0] << std::endl;
+  std::cout << "start x " << trkstartx_pandoraNu[0] << std::endl;
+  std::cout << "start y " << trkstarty_pandoraNu[0] << std::endl;
+  std::cout << "start z " << trkstartz_pandoraNu[0] << std::endl;
+  std::cout << "end x " << trkendx_pandoraNu[0] << std::endl;
+  std::cout << "end y " << trkendy_pandoraNu[0] << std::endl;
+  std::cout << "end z " << trkendz_pandoraNu[0] << std::endl;
 
   
   
+  
+
 }

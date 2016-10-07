@@ -19,13 +19,14 @@ class Spectrum {
   public :
 
   Spectrum(string name, string title, int nbins, double xlow, double xup, double POT);
-  Spectrum(TH1D* hin, double POT);
+  Spectrum(TH1D* hin, string name, double POT);
   virtual ~Spectrum();
   TH1D* ToTH1D();
   TH1D* ToTH1D(double exposure);
   double GetPOT();
   void Fill(double value);
   void Save();
+  static Spectrum* MakeRatio(Spectrum*, Spectrum*, string, string);
 
   private:
 
@@ -69,10 +70,29 @@ Spectrum::Spectrum(string name, string title, int nbins, double xlow, double xup
 
 }
 
-Spectrum::Spectrum(TH1D* hin, double POT){
+Spectrum::Spectrum(TH1D* hin, string name, double POT){
 
   fPOT = POT;
   h = hin;
+  fname = name;
+
+  std::ostringstream ltx;
+  ltx << fPOT << " POT";
+  std::string ltxstr = ltx.str();
+
+  double x = 0.25;//0.84;
+  double y = 0.92827;//0.52;
+  double size = 25;
+  int color = 1;
+  int font = 43;
+  int align = 32;
+  latex = new TLatex(x, y, ltxstr.c_str());
+  latex->SetNDC();
+  latex->SetTextSize(size);
+  latex->SetTextColor(color);
+  latex->SetTextFont(font);
+  latex->SetTextAlign(align);
+
 }
 
 Spectrum::~Spectrum() {
@@ -117,7 +137,29 @@ void Spectrum::Save() {
 
   c1->SaveAs(temp2 + ".pdf");
   c1->SaveAs(temp2 + ".C","C");
+
 }
+
+Spectrum * Spectrum::MakeRatio(Spectrum* s1, Spectrum* s2, string name, string title){
+
+  if (s1->GetPOT() != s2->GetPOT()) {
+    std::cout << "Error in Spectrum::MakeRatio. Spectrums have different POT values. Exiting now." << std::endl;
+    exit(0);
+  }
+
+  double thisPOT = s1->GetPOT();
+  TH1D* h1 = s1->ToTH1D();
+  TH1D* h2 = s2->ToTH1D();
+
+  TH1D* hratio = (TH1D*) h1->Clone(name.c_str());
+  hratio->Divide(h2);
+
+  Spectrum * Sratio = new Spectrum(hratio, name, thisPOT);
+
+  return Sratio;
+
+}
+
 
 
 

@@ -28,7 +28,7 @@ int signal=0;
 int cosmicBkgAndNoCosmicTrack=0;
 int signalAndNoCosmicTrack=0;
 int cosmicBkgAndCosmicTrackNotContained=0;
-
+int signalAndCosmicTrackNotContained=0;
 
 //____________________________________________________________________________________________________
 void ActivateBranches(AnaNuMI *anatree) {
@@ -300,6 +300,7 @@ int main(int argc, char* argv[]) {
     if (isCosmic && trackCandidatePandoraCosmicNotContained) cosmicBkgAndCosmicTrackNotContained++;
     if (isSignal) signal++;
     if (isSignal && trackCandidatePandoraCosmic == -1) signalAndNoCosmicTrack++;
+    if (isSignal && trackCandidatePandoraCosmicNotContained) signalAndCosmicTrackNotContained++;
 
     // For this selected track, verify if I have hits on all planes.
     if (anatree->ntrkhits_pandoraNu[trackCandidate][0] < 0) noHitsOnUplane++;
@@ -368,6 +369,7 @@ int main(int argc, char* argv[]) {
   std::cout <<"signal                    = " << signal << endl;
   std::cout <<"signalAndNoCosmicTrack    = " << signalAndNoCosmicTrack << endl;
   std::cout <<"cosmicBkgAndCosmicTrackNotContained = " << cosmicBkgAndCosmicTrackNotContained << endl;
+  std::cout <<"signalAndCosmicTrackNotContained = " << signalAndCosmicTrackNotContained << endl;
 
   clock_t end = clock();
   double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;

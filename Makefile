@@ -5,4 +5,4 @@ SOURCES = $(FILES:%.cpp=$(SRC_PATH)/%.cpp)
 CFLAGS=-Wall
 
 all:
-	`root-config --cxx --cflags --glibs` ${CFLAGS} -fopenmp -I./include -o NuMICCInclusive NuMICCInclusive.cpp ${FILES} `root-config --glibs`	
+	`root-config --cxx --cflags --glibs` ${CFLAGS} -I./include -o NuMICCInclusive NuMICCInclusive.cpp ${FILES} `root-config --glibs`	

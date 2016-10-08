@@ -24,7 +24,7 @@ bool isCosmic = false;
 bool isSignal = false;
 bool trackCandidatePandoraCosmicNotContained = false;
 int cosmicBkg=0;
-int signal=0;
+int Signal=0;
 int cosmicBkgAndNoCosmicTrack=0;
 int signalAndNoCosmicTrack=0;
 int cosmicBkgAndCosmicTrackNotContained=0;
@@ -107,7 +107,8 @@ int main(int argc, char* argv[]) {
 
   string pattern;
   if(beam == "numi") pattern = "/data/t2k/lar/uboone/prodgenie_numi_nu_uboone_MCC7/prodgenie_numi_nu_cosmic_uboone_merged_gen_g4_detsim_reco1_reco2_ana.root";
-  if(beam == "bnb")  pattern = "/pnfs/uboone/persistent/users/aschu/MC_BNB_Cosmic/prodgenie_bnb_nu_cosmic_uboone_v05_08_00_anatree.root";
+  //if(beam == "bnb")  pattern = "/pnfs/uboone/persistent/users/aschu/MC_BNB_Cosmic/prodgenie_bnb_nu_cosmic_uboone_v05_08_00_anatree.root";
+  if(beam == "bnb")  pattern = "~/pnfs/aschu/MC_BNB_Cosmic/prodgenie_bnb_nu_cosmic_uboone_v05_08_00_anatree.root";
 
   bool evalPOT = false;
   double totalPOT = 0.;
@@ -298,7 +299,7 @@ int main(int argc, char* argv[]) {
     if (isCosmic) cosmicBkg++;
     if (isCosmic && trackCandidatePandoraCosmic == -1) cosmicBkgAndNoCosmicTrack++;
     if (isCosmic && trackCandidatePandoraCosmicNotContained) cosmicBkgAndCosmicTrackNotContained++;
-    if (isSignal) signal++;
+    if (isSignal) Signal++;
     if (isSignal && trackCandidatePandoraCosmic == -1) signalAndNoCosmicTrack++;
     if (isSignal && trackCandidatePandoraCosmicNotContained) signalAndCosmicTrackNotContained++;
 
@@ -366,7 +367,7 @@ int main(int argc, char* argv[]) {
 
   std::cout <<"cosmicBkg                 = " << cosmicBkg << endl;
   std::cout <<"cosmicBkgAndNoCosmicTrack = " << cosmicBkgAndNoCosmicTrack << endl;
-  std::cout <<"signal                    = " << signal << endl;
+  std::cout <<"signal                    = " << Signal << endl;
   std::cout <<"signalAndNoCosmicTrack    = " << signalAndNoCosmicTrack << endl;
   std::cout <<"cosmicBkgAndCosmicTrackNotContained = " << cosmicBkgAndCosmicTrackNotContained << endl;
   std::cout <<"signalAndCosmicTrackNotContained = " << signalAndCosmicTrackNotContained << endl;

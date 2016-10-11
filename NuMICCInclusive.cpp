@@ -340,10 +340,12 @@ int main(int argc, char* argv[]) {
 
   ph.SaveIntermidiatePlots();
 
+  
   ph.MakeRatioPlots("longtrack","trackcontained");
   ph.MakeRatioPlots("trackcontained","flashmatch");
   ph.MakeRatioPlots("flashmatch","selectbesttrack");
-
+  ph.MakeRatioPlots("selectbesttrack","vertexcontained");
+  ph.MakeRatioPlots("vertexcontained","flashtag");
 
   newtree->AutoSave();
   delete oldfile;
